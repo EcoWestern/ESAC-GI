@@ -17,34 +17,6 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Added
-
-- **Held-out seed generation.** `esac seed` generates a 256-bit seed, writes it to
-  `.heldout/seed` (gitignored, mode 0600), and prints the fingerprint that is safe to
-  publish. `esac seed show` reports the path and fingerprint without printing the seed, and
-  refuses to replace an existing seed unless `--force` is passed, since replacing one stops
-  earlier runs citing it from being reproducible. A held-out run resolves its seed from
-  `--seed`, then `ESAC_HELD_OUT_SEED`, then the stored file, and refuses when there is none
-  rather than inventing one. Guided `auto` mode offers to generate one where the pool is
-  chosen. The suite covers generation, resolution order, the refusal to overwrite, and that
-  a generated seed yields a complete pool that is not the public one.
-
-### Changed
-
-- **`--split both` is gone.** A combined mode could not mean anything: both pools come from
-  the same 42 templates, so under one seed the two pools are the same instances, and the
-  mode asked every question twice while counting every point twice. One run is now one pool,
-  one seed, and one set of instances, and a public-versus-held-out comparison is two runs.
-  `--split both` is refused by name, with that explanation, rather than silently treated as
-  public.
-
-### Fixed
-
-- **The text renderer no longer throws on an out-of-range fraction.** A category scoring
-  above 100 percent overflowed the fraction bar and raised `RangeError: Invalid count
-  value` instead of printing the number that explained the problem. Fractions are clamped
-  now, so a scoring bug shows up as a wrong figure rather than a crash.
-
 ## [1.0.0] - 2026-09-22
 
 The first public source release of ESAC-GI.
@@ -106,16 +78,41 @@ The first public source release of ESAC-GI.
   for a single cap. `--extra-body` merges any other JSON object into each model request.
   Both apply to the model under test only; the judge's parameters remain part of the
   pinned configuration.
-- **Tests.** 75 tests asserting the properties the benchmark's claims depend on,
+- **Held-out seed generation.** `esac seed` generates a 256-bit seed, writes it to
+  `.heldout/seed` (gitignored, mode 0600), and prints the fingerprint that is safe to
+  publish. `esac seed show` reports the path and fingerprint without printing the seed, and
+  refuses to replace an existing seed unless `--force` is passed, since replacing one stops
+  earlier runs citing it from being reproducible. A held-out run resolves its seed from
+  `--seed`, then `ESAC_HELD_OUT_SEED`, then the stored file, and refuses when there is none
+  rather than inventing one. Guided `auto` mode offers to generate one where the pool is
+  chosen.
+- **Tests.** 80 tests asserting the properties the benchmark's claims depend on,
   including that the shortcut answer for each trap item is genuinely wrong, that
-  reference answers score 100 percent on their own checks, and that thresholds
-  behave at exactly the boundary.
+  reference answers score 100 percent on their own checks, that thresholds behave at
+  exactly the boundary, that a pool name selects no items of its own, and that a generated
+  held-out seed produces a complete pool which is not the public one.
 - **Written documentation.** `specs/spec.md` carries the design in two parts, the original
   basis and the first amendment that governs. `specs/scoring.md` is the operational
   companion: the structure of a run, how every point is awarded, the check-level criteria
   for all forty-two items, and the full text of the four judge rubrics.
 - **Public repository files.** MIT licence, contribution policy, security policy,
   code of conduct, issue templates, CI, and citation metadata.
+
+### Changed
+
+- **`--split both` is gone.** A combined mode could not mean anything: both pools come from
+  the same 42 templates, so under one seed the two pools are the same instances, and the
+  mode asked every question twice while counting every point twice. One run is now one pool,
+  one seed, and one set of instances, so a public-versus-held-out comparison is two runs.
+  `--split both` is refused by name, with that explanation, rather than silently treated as
+  public, and a pool name now selects which seed a run must resolve.
+
+### Fixed
+
+- **The text renderer no longer throws on an out-of-range fraction.** A category scoring
+  above 100 percent overflowed the fraction bar and raised `RangeError: Invalid count
+  value` instead of printing the number that explained the problem. Fractions are clamped
+  now, so a scoring bug shows up as a wrong figure rather than a crash.
 
 [Unreleased]: https://github.com/EcoWestern/ESAC-GI/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/EcoWestern/ESAC-GI/releases/tag/v1.0.0

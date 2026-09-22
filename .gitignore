@@ -5,7 +5,8 @@ dist/
 .heldout/
 
 # Held-out evaluation material is evaluator-controlled and must never be
-# committed (specs/first-amendment.md section 3).
+# committed (`specs/spec.md`, Part II §3, and the held-out custody rules in
+# `src/seedfile.ts`).
 heldout-key*.json
 *.heldout.json
 

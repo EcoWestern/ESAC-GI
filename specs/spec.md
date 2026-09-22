@@ -211,6 +211,9 @@ specific ambiguity without changing the central purpose: a short, cheap benchmar
 measures difficult capabilities while remaining reproducible and resistant to
 contamination.
 
+These sections were written before the document was merged, so the source cites them as
+`first-amendment §N`, which means the numbered section below.
+
 ## 1. ESAC-AG remains a 75-point benchmark
 
 *Supersedes the efficiency-modifier paragraph in Part I, under "ESAC-AG".*
