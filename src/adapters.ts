@@ -7,7 +7,8 @@
  * infrastructure. A 200 response containing a refusal is not.
  */
 
-import { InfrastructureError } from "./types.ts";
+import { InfrastructureError, ModelTruncatedError } from "./types.ts";
+import { OUTPUT_LIMITS } from "./version.ts";
 import type { JudgeAdapter, JudgeInput, JudgeResponse, ModelAdapter, ModelRequest, ModelResponse } from "./types.ts";
 import type { Rng } from "./rng.ts";
 
@@ -144,10 +145,13 @@ export interface HttpAdapterOptions {
 /**
  * Any OpenAI-compatible chat-completions endpoint.
  *
- * Covers OpenAI, DeepSeek, Groq, Together, vLLM, Ollama, LM Studio, and llama.cpp's
- * server, which is what makes the "no single vendor grades anyone" requirement
- * practically satisfiable: the judge can be a locally-hosted open-weight model
- * reached through this same adapter.
+ * Covers OpenAI, DeepSeek, Groq, Together, OpenRouter, vLLM, Ollama, LM Studio, and
+ * llama.cpp's server, which is what makes the "no single vendor grades anyone"
+ * requirement practically satisfiable: the judge can be a locally-hosted open-weight
+ * model, or an open-weight model reached through an aggregator, using this same
+ * adapter with no provider-specific code. An aggregator such as OpenRouter is the
+ * recommended route for a hosted judge, since it serves the pinned judges and the
+ * model under test behind one key.
  *
  * Retries are NOT performed here. The runner owns retry policy so that retry counts
  * are recorded uniformly across adapters.
@@ -210,6 +214,16 @@ export function createHttpAdapter(options: HttpAdapterOptions): ModelAdapter & J
         throw new InfrastructureError(`model returned an unparseable body: ${truncate(result.text, 300)}`);
       }
 
+      // No content together with finish_reason "length" means the cap was reached while
+      // the model was still working. That is a model failure, not an outage, and it is not
+      // worth retrying, so it is raised as such rather than passed on as an empty answer.
+      if (parsed.content.trim().length === 0 && parsed.finishReason === "length") {
+        throw new ModelTruncatedError(
+          `model hit the ${req.maxTokens}-token output cap before answering`,
+          { promptTokens: parsed.promptTokens, completionTokens: parsed.completionTokens },
+        );
+      }
+
       return {
         text: parsed.content,
         promptTokens: parsed.promptTokens,
@@ -231,7 +245,7 @@ export function createHttpAdapter(options: HttpAdapterOptions): ModelAdapter & J
             messages: [{ role: "user", content: prompt }],
             temperature: input.temperature,
             top_p: input.topP,
-            max_tokens: 512,
+            max_tokens: OUTPUT_LIMITS.judgeTokens,
             response_format: { type: "json_object" },
             ...(options.extraBody ?? {}),
           },
@@ -259,6 +273,8 @@ interface ChatCompletion {
   readonly content: string;
   readonly promptTokens: number;
   readonly completionTokens: number;
+  /** Why the provider stopped, when it says so. "length" means the output cap was hit. */
+  readonly finishReason: string | null;
 }
 
 function parseChatCompletion(body: string): ChatCompletion | null {
@@ -288,11 +304,17 @@ function parseChatCompletion(body: string): ChatCompletion | null {
       .join("");
   }
 
-  if (typeof content !== "string") return null;
+  // A finished choice with no content is an empty answer, which the item grades as a
+  // failure. Returning null here would instead report a well-formed response as an
+  // unparseable body and retry a deterministic outcome five times.
+  const text = typeof content === "string" ? content : "";
 
   const usage = root["usage"] as Record<string, unknown> | undefined;
+  const finishReason =
+    typeof first["finish_reason"] === "string" ? (first["finish_reason"] as string) : null;
   return {
-    content,
+    content: text,
+    finishReason,
     promptTokens: typeof usage?.["prompt_tokens"] === "number" ? (usage["prompt_tokens"] as number) : 0,
     completionTokens:
       typeof usage?.["completion_tokens"] === "number" ? (usage["completion_tokens"] as number) : 0,

@@ -37,7 +37,14 @@ export const ESAC_SUITE = "ESAC-GI";
  */
 export const PUBLIC_DATASET_SEED = "esac-gi-v1.0-public";
 
-/** Placeholder only. Real held-out seed is supplied at run time via --heldout-seed. */
+/**
+ * Environment variable holding the held-out dataset seed.
+ *
+ * For runs that should write nothing to disk, such as CI, where the value arrives from a
+ * secret. `--seed` overrides it, and `.heldout/seed` (written by `esac seed`) is the
+ * fallback. All three are preferred to inventing a seed, which would produce a run nobody
+ * could reproduce.
+ */
 export const HELD_OUT_DATASET_SEED_ENV = "ESAC_HELD_OUT_SEED";
 
 /**
@@ -46,13 +53,70 @@ export const HELD_OUT_DATASET_SEED_ENV = "ESAC_HELD_OUT_SEED";
  */
 export const CANARY = "ESAC-CANARY-GI-a3f9c17e4b2d8056-v1.0";
 
-/** Pinned decoding parameters. Part of the benchmark definition, not per-run config. */
+/**
+ * The judge pinned for official ESAC-GI v1.0 runs.
+ *
+ * Tenet 3 requires the judge to be open-weight, self-hostable, and pinned per release,
+ * so that rubric scores do not drift silently when the judge model is updated upstream.
+ * This is the model reserved for that role. The harness records whichever judge a run
+ * actually used, so a run graded by something else is visible in the report rather than
+ * silent.
+ *
+ * `xiaomi/mimo-v2.6-pro` was chosen for its general capability and, in the maintainers'
+ * private testing, for an absence of bias in its chain of thought. That second property
+ * matters more for rubric grading than raw benchmark standing, because the judge's task
+ * is to apply a rubric neutrally rather than to be impressive.
+ */
+export const PINNED_JUDGE = "xiaomi/mimo-v2.6-pro";
+
+/**
+ * Whether a judge model id names the pinned judge.
+ *
+ * Providers decorate the same weights differently: the pinned model may appear as
+ * `xiaomi/mimo-v2.6-pro`, as a bare `mimo-v2.6-pro`, or as a local tag such as
+ * `mimo-v2.6-pro:latest`. Identity is therefore the final path segment with any
+ * version tag removed, compared case-insensitively, so that a self-hosted copy of the
+ * pinned judge satisfies the pin instead of being refused as a stranger.
+ */
+export function isPinnedJudge(modelId: string): boolean {
+  return judgeIdentity(modelId) === judgeIdentity(PINNED_JUDGE);
+}
+
+function judgeIdentity(modelId: string): string {
+  const withoutTag = modelId.split(":")[0] ?? modelId;
+  const lastSegment = withoutTag.split("/").pop() ?? withoutTag;
+  return lastSegment.trim().toLowerCase();
+}
+
+/**
+ * Pinned decoding parameters. Part of the benchmark definition, not per-run config.
+ *
+ * The judge is held at temperature 0 as well. At zero, judging the same response twice
+ * is a reproducibility check on the judge rather than a sample of its variance, which is
+ * what the value buys: the same response and the same rubric should score the same.
+ * Raising it would make the 2x2 protocol measure judge-side sampling variance instead,
+ * which changes what the score means and is therefore a major-version change.
+ */
 export const DECODING = {
   temperature: 0,
   topP: 1,
-  /** Judge items need non-zero temperature to sample judge-side variance meaningfully. */
   judgeTemperature: 0,
   judgeTopP: 1,
+} as const;
+
+/**
+ * Output caps. Part of the benchmark definition, for the same reason the time budget is:
+ * a model that cannot answer within its budget has failed the item.
+ *
+ * That makes the cap a scoring parameter, so it has to be generous enough that the budget
+ * is not what decides the score. A reasoning model can spend thousands of tokens thinking
+ * before it emits a single answer token, and a tight cap cuts such models off before they
+ * answer anything at all. Raise it further with --max-tokens for unusual models. The judge
+ * only ever emits a small JSON object, so its cap stays low.
+ */
+export const OUTPUT_LIMITS = {
+  modelTokens: 4096,
+  judgeTokens: 1024,
 } as const;
 
 /**

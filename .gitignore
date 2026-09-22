@@ -17,3 +17,9 @@ heldout-key*.json
 .DS_Store
 Thumbs.db
 *.swp
+
+# Secrets. An adapter spec names an environment variable rather than holding a key, so a
+# real key only ever arrives through the environment or a local .env. Never commit one.
+.env
+.env.*
+!.env.example

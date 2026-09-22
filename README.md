@@ -20,6 +20,12 @@ every expected answer is computed from a seed rather than looked up, so there is
 private answer file that can drift out of sync with the copy you are reading. Anyone who
 has the repository can reproduce a score exactly.
 
+The harness is an OpenAI-compatible client, so it evaluates any model behind a
+chat-completions endpoint with no provider-specific code. The recommended way to run it is
+through an aggregator such as OpenRouter, which supplies both the model under test and the
+independent open-weight judge through one key. See
+[Running against a model](#running-against-a-model).
+
 The companion suite, ESAC-AG (Agentic Work and Capability), is specified in the design
 document but is not implemented here.
 
@@ -102,18 +108,94 @@ npm install            # dev dependencies only: typescript and @types/node
 npm run verify         # typecheck plus the full test suite, offline
 ```
 
-The CLI is reached through npm from a clone. A bare `esac` command exists only if you
-have linked the package yourself.
+The package is private and unpublished, so there is no global `esac` on your PATH. From a
+clone, use the npm scripts, or pass a command through `npm run esac`:
 
 ```bash
+npm run auto                      # guided setup, then a run with a summary
 npm run esac -- list              # the item bank, with point allocation
 npm run esac -- inspect <itemId>  # render one generated instance, with its checks
+npm run esac -- seed              # generate a held-out seed, or `seed show` to inspect it
 npm run esac -- selftest          # verify the harness end to end, offline
-npm run esac -- version           # the version tag and the canary
+npm run esac -- version           # the version tag, canary, and pinned judge
 
 # A dry run that exercises the whole pipeline and measures nothing
 npm run esac -- run --model oracle --judge oracle
 ```
+
+`npm run auto` is shorthand for `npm run esac -- auto`. The `--` in the second form is
+what makes npm forward the arguments to the script rather than consume them itself, so
+`npm run esac -- list` and `npm run esac list` both work.
+
+`auto` is the shortest path to a real number. It asks four questions (model, judge,
+pool, and categories), each with a default that produces a correct run, then reports
+each section as it closes and prints one summary at the end:
+
+```
+$ npm run esac -- auto
+
+ESAC-GI auto mode
+A few questions. Press Enter to accept the default shown in [brackets].
+
+Model under test
+  A model id (assumed to be on https://openrouter.ai/api/v1),
+  a full "baseUrl|model|apiKeyEnvVar" spec, or "oracle" for a dry run.
+  > deepseek/deepseek-chat
+  using https://openrouter.ai/api/v1|deepseek/deepseek-chat|OPENROUTER_API_KEY
+
+Judge
+  The judge must be open-weight and pinned per release. Press Enter for the
+  pinned judge (xiaomi/mimo-v2.6-pro), or give a model id, a full
+  "baseUrl|model|apiKeyEnvVar" spec, or "oracle".
+  [xiaomi/mimo-v2.6-pro] >
+  using https://openrouter.ai/api/v1|xiaomi/mimo-v2.6-pro|OPENROUTER_API_KEY
+
+Pool
+  public or heldout [public] >
+Categories
+  Comma-separated category or item ids, or Enter for the whole suite.
+  [all] >
+
+  Ready:
+    model    https://openrouter.ai/api/v1|deepseek/deepseek-chat|OPENROUTER_API_KEY
+    judge    https://openrouter.ai/api/v1|xiaomi/mimo-v2.6-pro|OPENROUTER_API_KEY
+    pool     public
+    items    all
+
+  Start the run? [Y/n] >
+
+ESAC-GI v1.0  starting  ·  42 items  ·  model: deepseek/deepseek-chat@openrouter.ai  ·  judge: xiaomi/mimo-v2.6-pro@openrouter.ai
+  Section results appear below as each section completes.
+
+  [ 1/42] logic.seating                          100%
+  ...
+
+  SECTION  Writing quality                     6.50 / 10    65.0%
+  ...
+
+========================================================================
+  EcoWestern Short and Cheap General Intelligence Benchmark, Version 1
+  ESAC-GI v1.0   public pool   model: deepseek/deepseek-chat@openrouter.ai   judge: xiaomi/mimo-v2.6-pro@openrouter.ai
+========================================================================
+
+  OVERALL SCORE   48.25 / 75          64.3%     FAIL
+
+  SECTION SCORES
+    Logic & deduction                  8.00 / 10    80.0%  [###################.....]
+  ! Writing quality                    4.50 / 10    45.0%  [###########.............]
+  ...
+
+  NOTES
+  - Below the 60% category threshold: Writing quality.
+  - Judge-graded categories carry more uncertainty than the arithmetic suggests: 15 of 75 points.
+  - This was a public-pool run. Official comparative claims should cite a held-out run.
+  - 42 items is a small sample. The total is a directional signal; the per-category
+    breakdown is where the diagnostic value is.
+```
+
+Passing `--model` answers the first question and skips it; `--yes` skips the whole
+conversation and requires the answers to be supplied as flags. Both are useful in
+scripts and in CI.
 
 `npm run export:public` regenerates the committed public pool. CI fails if that snapshot
 drifts from what the generators produce, so the public repository cannot quietly stop
@@ -121,45 +203,158 @@ matching itself.
 
 ## Running against a model
 
+ESAC-GI ships an OpenAI-compatible client and nothing else. It speaks the chat-completions
+shape, which is the de facto standard for hosted inference, so any endpoint that
+implements it can be evaluated with no provider-specific code and no vendor SDK.
+
 An adapter spec has the form `baseUrl|model|apiKeyEnvVar`. The third field names an
 environment variable rather than holding a key inline.
+
+The named variable is read from the environment. A `.env` file in the working directory is
+loaded automatically if present, and a variable already exported in your shell wins over
+the file, so a CI secret is never shadowed by a stale `.env`. `.env.example` shows the
+shape, and `.env` itself is gitignored.
 
 ```bash
 npm run esac -- run \
   --model "https://api.example.com/v1|model-name|EXAMPLE_API_KEY" \
-  --judge "http://localhost:11434/v1|glm-4.6|OLLAMA_KEY" \
+  --judge "http://localhost:11434/v1|judge-model|OLLAMA_KEY" \
   --json runs/example.json \
   --verbose
 ```
 
 | Flag | Meaning |
 |---|---|
-| `--split` | `public` (default), `heldout`, or `both` |
+| `--split` | `public` (default) or `heldout`; one run is one pool |
 | `--items` | comma-separated item ids or category ids, for a partial run |
 | `--json` | write the full report as JSON |
 | `--verbose` | include per-check detail |
 | `--quiet` | suppress the per-item progress tally |
+| `--max-tokens <n>` | output cap for the model under test (default 4096) |
+| `--extra-body <json>` | extra JSON merged into each model request, for provider-specific parameters |
+| `--allow-unpinned-judge` | run anyway with a substituted judge; the result carries no verdict |
 
-The bundled HTTP adapter speaks the OpenAI chat-completions shape, so it reaches OpenAI,
-DeepSeek, Groq, Together, vLLM, Ollama, LM Studio, and llama.cpp's server. That is what
-makes the judging rule practically satisfiable: the judge can be a locally hosted
-open-weight model, with no API key from the company being tested.
+### Run it with OpenRouter if you can
+
+The awkward part of running this benchmark is the judge, not the model. Fifteen of the 75
+points are rubric-graded, the judge must be open-weight and pinned per release, and most
+first-party APIs either do not serve open-weight models or would make the company being
+tested the grader.
+
+An aggregator removes that problem in a single connection, and **OpenRouter is the
+recommended way to run ESAC-GI**. It serves a wide range of open-weight models, including
+the judge pinned for this release, behind one OpenAI-compatible endpoint and one key, so
+the model under test and the independent judge are reached from the same place:
+
+```bash
+npm run esac -- run \
+  --model "https://openrouter.ai/api/v1|deepseek/deepseek-chat|OPENROUTER_API_KEY" \
+  --judge "https://openrouter.ai/api/v1|xiaomi/mimo-v2.6-pro|OPENROUTER_API_KEY" \
+  --json runs/report.json \
+  --verbose
+```
+
+Nothing above is OpenRouter-specific, though. A locally hosted judge works just as well,
+and that is the point of the open-weight rule. Any of these endpoints will do:
+
+| Endpoint | Base URL | Typical role |
+|---|---|---|
+| OpenRouter | `https://openrouter.ai/api/v1` | Recommended. Open-weight judges and models behind one key |
+| OpenAI | `https://api.openai.com/v1` | Model under test only |
+| DeepSeek | `https://api.deepseek.com/v1` | Model under test, or an open-weight judge |
+| Groq | `https://api.groq.com/openai/v1` | Hosted open-weight models |
+| Together | `https://api.together.xyz/v1` | Hosted open-weight models |
+| Ollama | `http://localhost:11434/v1` | Local judge, no API key required |
+| LM Studio | `http://localhost:1234/v1` | Local judge, no API key required |
+| llama.cpp server | `http://localhost:8080/v1` | Local judge, no API key required |
+| vLLM | `http://localhost:8000/v1` | Self-hosted judge at scale |
+
+Base URLs follow each provider's own convention, so check their documentation if a run
+returns a transport error. A closed first-party model is acceptable as the model under
+test, and never as the judge.
+
+### The pinned judge
+
+The judge pinned for ESAC-GI v1.0 is **`xiaomi/mimo-v2.6-pro`**, a new open-weight model.
+It was chosen for judge duty on two grounds: strong general capability, and an absence of
+bias in its chain of thought in the maintainers' private testing. The second matters more
+here than raw benchmark standing, because the judge's job is to apply a rubric neutrally
+rather than to be impressive.
+
+The pin is what keeps rubric scores from drifting when a judge model is updated upstream.
+The judge actually used is recorded in every report, so a run graded by something else is
+visible rather than silent, and changing the pinned judge is a major-version change.
+
+Model ids are provider-specific, so confirm the id in the provider's catalogue before a
+run. Hosting the pinned judge yourself is equally valid, and is the strongest form of the
+independent-judge claim. The check compares the model name rather than the full id, so a
+self-hosted copy still satisfies it.
+
+The pin is enforced rather than merely documented. A run whose judge is not the pinned
+judge is refused, and `--allow-unpinned-judge` is required to proceed. Such a run carries
+**no verdict**: it is reported as `NOT VALID` rather than pass or fail, because the judge
+decides a whole category and therefore decides the outcome. The 60 points that do not
+depend on a judge are still measured and reported. Changing the judge is a
+major-version change for anyone publishing results, and a substituted-judge run exits
+with status code 3 so a script cannot mistake it for a result.
+
+### Thinking budgets
+
+Some models spend output tokens on hidden reasoning before writing an answer, and on most
+APIs that reasoning counts against `--max-tokens`. When it does, a model can exhaust its
+allowance thinking and never answer at all, which the harness reports as a truncated model
+failure. A cap high enough to stop that happening is doing its job; a cap much higher than
+that mostly costs money, because a correct answer here is a short one.
+
+Where the provider can separate the two allowances, separate them, so thinking stops
+competing with answering:
+
+```bash
+npm run auto -- --thinking-tokens 4096 --max-tokens 2048
+```
+
+`--thinking-tokens` sends that budget in the shape OpenRouter expects, and is the form to
+prefer, because raw JSON also has to survive your shell. For any other provider parameter,
+`--extra-body` merges a JSON object into the request, which covers OpenAI-style
+`reasoning_effort` and whatever else a provider accepts:
+
+```powershell
+# PowerShell: the inner quotes need escaping
+npm run auto -- --extra-body '{\"reasoning\":{\"max_tokens\":4096}}' --max-tokens 2048
+```
+
+```bash
+# bash
+npm run auto -- --extra-body '{"reasoning":{"max_tokens":4096}}' --max-tokens 2048
+```
+
+Both apply to the model under test and never to the judge, whose decoding parameters are
+part of the pinned configuration: changing them would change what a rubric score means.
 
 ## Public and held-out pools
 
-The same generators produce both pools under different dataset seeds. The public seed is
-disclosed with the repository. The held-out seed is evaluator-controlled and must not be
-committed, and the CLI refuses to run the held-out pool without one.
+The same generators produce both pools. A pool is not a stored set of items: an instance is
+derived from `hash(datasetSeed + ":" + itemId)`, so the pool is whichever dataset seed a run
+resolves. The public seed is disclosed with the repository. The held-out seed is
+evaluator-controlled and must not be committed.
 
 ```bash
-npm run esac -- export --split public --out public/esac-gi-v1.0-public.jsonl
+npm run esac -- seed --out .heldout/seed   # generate one, or omit --out for the default
+npm run esac -- seed show                  # path and fingerprint; --reveal prints the seed
 
-$env:ESAC_HELD_OUT_SEED = "<evaluator seed>"          # PowerShell
 npm run esac -- key --split heldout --out runs/heldout-key.json
+npm run esac -- run --split heldout --model "<spec>" --json runs/heldout.json
 ```
 
+A held-out run resolves its seed in this order: `--seed`, then `ESAC_HELD_OUT_SEED`, then
+`.heldout/seed` (gitignored). With none of the three, the run refuses rather than inventing
+one, because a seed nobody keeps produces a run nobody can repeat. Guided `auto` mode, run
+on a terminal, offers to generate one at the point where you choose the pool.
+
 The split is by *instance* rather than by *template*, so every category has held-out
-coverage even though the bank is small.
+coverage even though the bank is small. The consequence worth knowing: two held-out runs are
+item-identical only when they share a seed. Use one seed for a comparison, and publish the
+fingerprint from the report rather than the seed itself.
 
 Official comparative claims should cite a held-out run. A model that scores substantially
 higher on the public pool than on the held-out pool is a visible signal of overfitting to
@@ -214,7 +409,10 @@ by padding, which would win a pure length rubric.
 ### Judge discipline
 
 No vendor grades anyone. The judge must be open-weight, self-hostable, and pinned per
-release.
+release, and for v1.0 the pin is `xiaomi/mimo-v2.6-pro`. Reaching one is the only
+genuinely awkward part of running the benchmark, which is why an aggregator such as
+OpenRouter is the recommended route. See
+[Running against a model](#running-against-a-model).
 
 Judge-graded items use 2x2 replication: the model is run twice on the item, each response
 is judged twice, and the four observations are averaged. That separates model-side
@@ -226,8 +424,16 @@ variance from judge-side variance. Deterministic items run once.
   unparseable judge response. It is retried under identical conditions and is never scored
   as a zero. If it persists, the run aborts rather than reporting an outage as a low
   score.
-- A **model failure** is an empty answer, a refusal, a wrong answer, or a model that
-  exceeds the item's time budget. It is scored as a failure.
+- A **model failure** is an empty answer, a refusal, a wrong answer, a model that exceeds
+  the item's time budget, or a model that reaches the output cap without producing an
+  answer. It is scored as a failure, and a truncated response is not retried, because the
+  same budget produces the same outcome.
+
+The output cap is part of the benchmark definition, like the time budget, so it is set
+generously: a reasoning model can spend thousands of tokens thinking before it emits a
+single answer token, and a tight cap would cut such models off before they answer anything
+at all. Raise it with `--max-tokens <n>`, and note that a report says when a cap was hit,
+so a low score is not mistaken for a wrong answer.
 
 The distinction is enforced in `runner.ts` and covered by tests.
 
@@ -276,6 +482,7 @@ src/
   categories.ts       category registry, with point/item invariants asserted
   graders.ts          deterministic grading (exact, numeric, regex, programmatic)
   judge.ts            judge prompt construction, tolerant parsing, normalisation
+  seedfile.ts         held-out seed generation, storage, and resolution
   runner.ts           ordering, retries, the 2x2 replication protocol
   score.ts            aggregation, thresholds, reporting
   adapters.ts         oracle + OpenAI-compatible HTTP adapters
@@ -287,6 +494,8 @@ public/
 specs/
   spec.md             the design specification: Part I is the original basis,
                       Part II is the first amendment, which governs
+  scoring.md          the scoring reference: run structure, per-category
+                      scoring, and the criteria behind every point
 tests/all.test.ts     the test suite
 tools/                offline generators for the verified parameter pools
 .github/              issue templates, CI, and dependency automation
@@ -311,10 +520,16 @@ The document is kept in that shape rather than flattened, because the reasoning 
 instrument is part of the instrument, and because it should be visible what changed and
 why.
 
+For the operational side of the same instrument, `specs/scoring.md` documents how a run is
+structured, how each point is awarded, and the criteria behind every item: the run order,
+the replication protocol, the dual 60 percent gate, the check-level criteria for all forty
+items, and the full text of the four judge rubrics. The specification says why; the scoring
+reference says what.
+
 ## Tests
 
 ```bash
-npm test          # 60 tests, offline
+npm test          # the full suite, offline
 npm run typecheck
 ```
 

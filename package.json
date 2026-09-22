@@ -34,6 +34,7 @@
     "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/all.test.ts",
     "verify": "npm run typecheck && npm test",
     "esac": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts",
+    "auto": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts auto",
     "export:public": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts export --split public --out public/esac-gi-v1.0-public.jsonl"
   },
   "devDependencies": {

@@ -17,6 +17,9 @@
  */
 
 import { strict as assert } from "node:assert";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 
 import { CATEGORIES, TOTAL_ITEMS, TOTAL_POINTS, JUDGE_GRADED_POINTS } from "../src/categories.ts";
@@ -24,12 +27,20 @@ import { ALL_ITEMS, instantiate, validateBank, seedFingerprint, itemPoints } fro
 import { gradeChecks, extractNumber, extractChoice, normalize } from "../src/graders.ts";
 import { parseJudgeResponse, scoreRubric, meanFraction, JUDGE_SCORE_MAX } from "../src/judge.ts";
 import { runItem, orderItems } from "../src/runner.ts";
-import { scoreRun } from "../src/score.ts";
+import { scoreRun, renderReport, renderFinalReport, toJson } from "../src/score.ts";
 import { createOracleAdapter, createOracleJudge } from "../src/adapters.ts";
 import { makeRng, deriveSeed, fnv1a } from "../src/rng.ts";
-import { PASS_THRESHOLD, REPLICATION, PUBLIC_DATASET_SEED, ESAC_VERSION, ESAC_VERSION_TAG, ESAC_MAJOR, ESAC_FULL_NAME, CANARY } from "../src/version.ts";
+import { PASS_THRESHOLD, REPLICATION, PUBLIC_DATASET_SEED, ESAC_VERSION, ESAC_VERSION_TAG, ESAC_MAJOR, ESAC_FULL_NAME, CANARY, PINNED_JUDGE, isPinnedJudge, OUTPUT_LIMITS } from "../src/version.ts";
 import { PACKING_POOL } from "../src/items/packing-pool.ts";
-import { InfrastructureError } from "../src/types.ts";
+import { InfrastructureError, ModelTruncatedError } from "../src/types.ts";
+import { resolveAutoConfig, normaliseSpec, modelIdOf, specProblem, DEFAULT_JUDGE_SPEC } from "../src/auto.ts";
+import {
+  generateSeed,
+  missingSeedMessage,
+  readSeedFile,
+  resolveHeldOutSeed,
+  writeSeedFile,
+} from "../src/seedfile.ts";
 import type { Instance, ItemRunResult, ModelAdapter } from "../src/types.ts";
 
 const PUBLIC_SEED = PUBLIC_DATASET_SEED;
@@ -694,6 +705,7 @@ function syntheticResults(instances: readonly Instance[], fraction: number): Ite
     promptTokens: 0,
     completionTokens: 0,
     modelFailed: false,
+    truncated: false,
   }));
 }
 
@@ -705,6 +717,7 @@ test("a perfect run scores exactly 75/75 and passes", () => {
     datasetSeed: PUBLIC_SEED,
     model: "synthetic",
     judge: null,
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   });
@@ -722,6 +735,7 @@ test("exactly 60% passes and 59% fails, in every category simultaneously", () =>
     datasetSeed: PUBLIC_SEED,
     model: "synthetic",
     judge: null,
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   };
@@ -742,6 +756,7 @@ test("a high overall score still fails when one category is below threshold", ()
     datasetSeed: PUBLIC_SEED,
     model: "synthetic",
     judge: null,
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   });
@@ -758,6 +773,7 @@ test("the half-weight boundary item does not distort the depth category total", 
     datasetSeed: PUBLIC_SEED,
     model: "synthetic",
     judge: null,
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   });
@@ -777,6 +793,7 @@ test("category percentages are comparable across differently-sized categories", 
     datasetSeed: PUBLIC_SEED,
     model: "synthetic",
     judge: null,
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   });
@@ -795,6 +812,7 @@ test("a category with missing items is scored against its full allocation, not t
     datasetSeed: PUBLIC_SEED,
     model: "synthetic",
     judge: null,
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   });
@@ -812,12 +830,14 @@ test("report always carries a version tag and seed fingerprint", () => {
     datasetSeed: PUBLIC_SEED,
     model: "synthetic",
     judge: "oracle-judge",
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   });
   assert.match(report.versionTag, /^ESAC-GI v\d+\.\d+$/);
   assert.ok(report.version.length > 0);
   assert.ok(report.datasetSeedFingerprint.length > 0);
+  assert.equal(report.judgePinned, false, "the oracle judge is not the pinned judge");
   assert.equal(report.judgeGradedPoints, 15);
 });
 
@@ -833,6 +853,24 @@ test("held-out runs require an evaluator-supplied seed", async () => {
       return p.fingerprint !== h.fingerprint;
     }),
     "held-out pool must not reproduce the public pool",
+  );
+});
+
+test("a pool name selects no items of its own, which is why there is no combined mode", () => {
+  // This is the reason `--split both` was removed rather than repaired. Both pools are
+  // the same templates, so the only input that separates them is the dataset seed. A
+  // combined run under one seed would ask every question twice with identical text and
+  // count every point twice.
+  const asPublic = instantiate(PUBLIC_SEED, "public");
+  const asHeldout = instantiate(PUBLIC_SEED, "heldout");
+  assert.equal(asPublic.length, TOTAL_ITEMS);
+  assert.equal(asHeldout.length, TOTAL_ITEMS);
+  assert.ok(
+    asPublic.every((item, index) => {
+      const other = asHeldout[index]!;
+      return item.itemId === other.itemId && item.fingerprint === other.fingerprint;
+    }),
+    "pool names must not select different items under one seed",
   );
 });
 
@@ -987,6 +1025,7 @@ test("a perfect oracle run reproduces exactly 75/75 through the full pipeline", 
     datasetSeed: PUBLIC_SEED,
     model: oracle.id,
     judge: judge.id,
+    judgePinned: false,
     startedAt: new Date().toISOString(),
     durationMs: 0,
   });
@@ -1062,5 +1101,544 @@ test("the scoring key is not recoverable from the model prompt", () => {
   assert.ok(
     checkedFreeResponse >= 8,
     `expected to check several free-response items, checked ${checkedFreeResponse}`,
+  );
+});
+
+// ===========================================================================
+// 11. Judge discipline
+// ===========================================================================
+
+test("the pinned judge is recognised across provider naming variants", () => {
+  // The pin has to survive the ways different providers spell the same weights, or a
+  // self-hosted copy of the pinned judge would be refused as a stranger.
+  assert.ok(isPinnedJudge(PINNED_JUDGE));
+  assert.ok(isPinnedJudge("xiaomi/mimo-v2.6-pro"));
+  assert.ok(isPinnedJudge("mimo-v2.6-pro"));
+  assert.ok(isPinnedJudge("MIMO-V2.6-PRO"));
+  assert.ok(isPinnedJudge("mimo-v2.6-pro:latest"));
+  assert.ok(isPinnedJudge("xiaomi/mimo-v2.6-pro:q4"));
+
+  // Anything else is a different judge, so the pin still means something.
+  assert.ok(!isPinnedJudge("z-ai/glm-4.6"));
+  assert.ok(!isPinnedJudge("mimo-v2.5-pro"));
+  assert.ok(!isPinnedJudge("oracle-judge"));
+  assert.ok(!isPinnedJudge(""));
+});
+
+test("the report states whether the judge was the pinned one", () => {
+  const base = {
+    items: syntheticResults(instantiate(PUBLIC_SEED, "public"), 1),
+    split: "public" as const,
+    datasetSeed: PUBLIC_SEED,
+    model: "synthetic",
+    startedAt: new Date().toISOString(),
+    durationMs: 0,
+  };
+
+  const pinned = scoreRun({
+    ...base,
+    judge: "xiaomi/mimo-v2.6-pro@openrouter.ai",
+    judgePinned: true,
+  });
+  assert.equal(pinned.judgePinned, true);
+  assert.match(renderReport(pinned), /judge: .*\(pinned\)/);
+  assert.match(toJson(pinned), /"judgePinned": true/);
+
+  const unpinned = scoreRun({
+    ...base,
+    judge: "some-other-model@example.test",
+    judgePinned: false,
+  });
+  assert.equal(unpinned.judgePinned, false);
+  assert.match(renderReport(unpinned), /judge: .*\(not the pinned judge\)/);
+});
+
+// ===========================================================================
+// 12. Auto mode
+// ===========================================================================
+
+test("auto mode expands a bare model id into an adapter spec", () => {
+  // The whole point of auto mode is that a model id on its own is enough.
+  assert.equal(
+    normaliseSpec("deepseek/deepseek-chat", null),
+    "https://openrouter.ai/api/v1|deepseek/deepseek-chat|OPENROUTER_API_KEY",
+  );
+  assert.equal(normaliseSpec("oracle", null), "oracle");
+  assert.equal(
+    normaliseSpec("http://localhost:11434/v1|mimo-v2.6-pro|OLLAMA_KEY", null),
+    "http://localhost:11434/v1|mimo-v2.6-pro|OLLAMA_KEY",
+  );
+  assert.equal(normaliseSpec("   ", "fallback"), "fallback");
+  assert.equal(modelIdOf("oracle"), "oracle");
+  assert.equal(
+    modelIdOf("https://openrouter.ai/api/v1|xiaomi/mimo-v2.6-pro|K"),
+    "xiaomi/mimo-v2.6-pro",
+  );
+});
+
+test("auto mode rejects specs that could not work", () => {
+  const unset = "ESAC_KEY_THAT_IS_NOT_SET";
+  assert.equal(process.env[unset], undefined);
+  assert.match(specProblem(`https://openrouter.ai/api/v1|model|${unset}`) ?? "", /not set/);
+  assert.match(specProblem("not-a-url|model") ?? "", /not a URL/);
+  assert.match(specProblem("https://openrouter.ai/api/v1") ?? "", /needs at least/);
+
+  assert.equal(specProblem("oracle"), null);
+  process.env[unset] = "present";
+  try {
+    assert.equal(specProblem(`https://openrouter.ai/api/v1|model|${unset}`), null);
+  } finally {
+    delete process.env[unset];
+  }
+});
+
+test("auto mode resolves a non-interactive configuration and defaults the judge to the pin", async () => {
+  process.env.OPENROUTER_API_KEY = "test-key";
+  try {
+    const config = await resolveAutoConfig({ yes: true, modelSpec: "oracle" });
+    assert.equal(config.modelSpec, "oracle");
+    assert.equal(config.judgeSpec, DEFAULT_JUDGE_SPEC);
+    assert.equal(config.split, "public");
+    assert.equal(config.items, null);
+    assert.equal(config.allowUnpinnedJudge, false);
+  } finally {
+    delete process.env.OPENROUTER_API_KEY;
+  }
+
+  // Without a model there is nothing to measure, and without a terminal there is
+  // nobody to ask.
+  await assert.rejects(() => resolveAutoConfig({ yes: true }), /needs a model/);
+  await assert.rejects(
+    () => resolveAutoConfig({ yes: true, modelSpec: "oracle", split: "everything" }),
+    /must be public or heldout/,
+  );
+  // There is no combined mode: a comparison is two runs, each attributable to one seed.
+  await assert.rejects(
+    () => resolveAutoConfig({ yes: true, modelSpec: "oracle", split: "both" }),
+    /is not a run mode/,
+  );
+});
+
+test("the auto summary leads with the score, lists every section, then the notes", () => {
+  const instances = instantiate(PUBLIC_SEED, "public");
+  const base = {
+    items: syntheticResults(instances, 0.8),
+    split: "public" as const,
+    datasetSeed: PUBLIC_SEED,
+    model: "synthetic",
+    startedAt: new Date().toISOString(),
+    durationMs: 1000,
+  };
+
+  const pinned = renderFinalReport(
+    scoreRun({ ...base, judge: "mimo-v2.6-pro@openrouter.ai", judgePinned: true }),
+  );
+  assert.match(pinned, /OVERALL SCORE/);
+  assert.match(pinned, /SECTION SCORES/);
+  assert.match(pinned, /NOTES/);
+  for (const category of CATEGORIES) {
+    assert.ok(pinned.includes(category.name), `summary omits ${category.name}`);
+  }
+  assert.ok(
+    !/NOT VALID/.test(pinned),
+    "a run under the pinned judge is a valid result",
+  );
+
+  const unpinned = renderFinalReport(
+    scoreRun({ ...base, judge: "other@example.test", judgePinned: false }),
+  );
+  assert.match(unpinned, /NOT VALID/);
+  assert.match(unpinned, /Not a valid ESAC-GI result/);
+
+  const partial = renderFinalReport(
+    scoreRun({
+      ...base,
+      items: syntheticResults(instances.slice(0, 3), 1),
+      judge: null,
+      judgePinned: false,
+    }),
+  );
+  assert.match(partial, /Partial run/);
+  assert.match(partial, /INCOMPLETE/);
+});
+
+test("a substituted judge produces no verdict", () => {
+  const instances = instantiate(PUBLIC_SEED, "public");
+  const base = {
+    items: syntheticResults(instances, 1),
+    split: "public" as const,
+    datasetSeed: PUBLIC_SEED,
+    model: "synthetic",
+    startedAt: new Date().toISOString(),
+    durationMs: 0,
+  };
+
+  // Full marks under a judge that is not the pinned one is still not an ESAC-GI result,
+  // because that judge decides a whole category and therefore the verdict.
+  const substituted = scoreRun({
+    ...base,
+    judge: "some-other-judge@example.test",
+    judgePinned: false,
+  });
+  assert.equal(substituted.verdict, "not-valid");
+  assert.equal(substituted.passed, false, "a substituted judge must not pass");
+  assert.ok(substituted.total > 0, "the numbers are still reported");
+
+  const pinned = scoreRun({
+    ...base,
+    judge: "mimo-v2.6-pro@openrouter.ai",
+    judgePinned: true,
+  });
+  assert.equal(pinned.verdict, "pass");
+
+  // The oracle judge is the harness exercising itself, not a substituted instrument,
+  // and the self-test depends on it being able to reach a pass.
+  const harness = scoreRun({ ...base, judge: "oracle-judge", judgePinned: false });
+  assert.equal(harness.verdict, "pass");
+
+  // Coverage is a separate matter from instrument validity.
+  const partialRun = scoreRun({
+    ...base,
+    items: syntheticResults(instances.slice(0, 3), 1),
+    judge: null,
+    judgePinned: false,
+  });
+  assert.equal(partialRun.verdict, "incomplete");
+
+  // Substitution outranks coverage: the number is not an ESAC-GI score at all.
+  const both = scoreRun({
+    ...base,
+    items: syntheticResults(instances.slice(0, 3), 1),
+    judge: "some-other-judge@example.test",
+    judgePinned: false,
+  });
+  assert.equal(both.verdict, "not-valid");
+});
+
+// ===========================================================================
+// 13. Environment
+// ===========================================================================
+
+test("a .env file fills gaps without overriding the environment", async () => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { loadDotEnv } = await import("../src/env.ts");
+
+  const dir = mkdtempSync(join(tmpdir(), "esac-env-"));
+  delete process.env.ESAC_FROM_FILE;
+  delete process.env.ESAC_QUOTED;
+  process.env.ESAC_FROM_SHELL = "shell";
+
+  try {
+    writeFileSync(
+      join(dir, ".env"),
+      [
+        "# a comment",
+        "ESAC_FROM_FILE=from-file",
+        "ESAC_FROM_SHELL=from-file",
+        'ESAC_QUOTED="quoted value"',
+        "",
+      ].join("\n"),
+    );
+
+    assert.equal(loadDotEnv(join(dir, ".env")), true);
+    assert.equal(process.env.ESAC_FROM_FILE, "from-file");
+    assert.equal(process.env.ESAC_QUOTED, "quoted value");
+    assert.equal(
+      process.env.ESAC_FROM_SHELL,
+      "shell",
+      "an exported variable must win over the file",
+    );
+  } finally {
+    delete process.env.ESAC_FROM_FILE;
+    delete process.env.ESAC_FROM_SHELL;
+    delete process.env.ESAC_QUOTED;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a missing .env file is not an error", async () => {
+  const { loadDotEnv } = await import("../src/env.ts");
+  assert.equal(loadDotEnv("no-such-file-hopefully.env"), false);
+});
+
+test("a run records the output cap it used, and flags an adjusted one", () => {
+  const instances = instantiate(PUBLIC_SEED, "public");
+  const base = {
+    items: syntheticResults(instances, 1),
+    split: "public" as const,
+    datasetSeed: PUBLIC_SEED,
+    model: "synthetic",
+    judge: null,
+    judgePinned: false,
+    startedAt: new Date().toISOString(),
+    durationMs: 0,
+  };
+
+  const atDefault = scoreRun({ ...base, maxTokens: OUTPUT_LIMITS.modelTokens });
+  assert.equal(atDefault.maxTokens, OUTPUT_LIMITS.modelTokens);
+  assert.ok(
+    !/adjusted output cap/.test(renderFinalReport(atDefault)),
+    "the default cap needs no caveat",
+  );
+
+  // The cap is part of the measurement, so raising it has to be visible in the result.
+  const raised = scoreRun({ ...base, maxTokens: 16384 });
+  assert.equal(raised.maxTokens, 16384);
+  assert.match(renderFinalReport(raised), /adjusted output cap/);
+  assert.match(renderReport(raised), /not strictly comparable/);
+  assert.match(toJson(raised), /"maxTokens": 16384/);
+
+  // Omitting it means the benchmark's own limit, not an unknown value.
+  assert.equal(scoreRun(base).maxTokens, OUTPUT_LIMITS.modelTokens);
+});
+
+// ===========================================================================
+// 15. Flag parsing
+// ===========================================================================
+
+test("the structured run flags parse, and refuse nonsense", async () => {
+  const { parseExtraBody, parseMaxTokens, parseThinkingTokens } = await import(
+    "../src/flags.ts"
+  );
+
+  assert.equal(parseMaxTokens("2048"), 2048);
+  assert.throws(() => parseMaxTokens("0"), /positive whole number/);
+  assert.throws(() => parseMaxTokens("lots"), /positive whole number/);
+  assert.throws(() => parseMaxTokens("1.5"), /positive whole number/);
+
+  assert.deepEqual(parseExtraBody('{"reasoning":{"max_tokens":4096}}'), {
+    reasoning: { max_tokens: 4096 },
+  });
+  assert.throws(() => parseExtraBody("not json"), /must be a JSON object/);
+  assert.throws(() => parseExtraBody("[1,2]"), /must be a JSON object/);
+  assert.throws(() => parseExtraBody("\"a string\""), /must be a JSON object/);
+
+  // The named flag exists so a thinking budget can be set without quoting JSON through a
+  // shell, which is where the same value would otherwise get mangled.
+  assert.deepEqual(parseThinkingTokens("4096"), { reasoning: { max_tokens: 4096 } });
+  assert.throws(() => parseThinkingTokens("none"), /positive whole number/);
+});
+
+// ===========================================================================
+// 14. Output budget
+// ===========================================================================
+
+/** Serve one canned chat-completion body on a throwaway port. */
+async function withStubCompletion(
+  body: unknown,
+  run: (adapter: Awaited<ReturnType<typeof import("../src/adapters.ts").createHttpAdapter>>) => Promise<void>,
+): Promise<void> {
+  const { createServer } = await import("node:http");
+  const { createHttpAdapter } = await import("../src/adapters.ts");
+
+  const server = createServer((_req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify(body));
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+
+  try {
+    const address = server.address();
+    assert.ok(address && typeof address === "object");
+    await run(
+      createHttpAdapter({
+        id: "stub",
+        baseUrl: `http://127.0.0.1:${address.port}/v1`,
+        apiKey: "test",
+        model: "stub-model",
+      }),
+    );
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+}
+
+function truncatedBody(): unknown {
+  return {
+    id: "gen-1",
+    object: "chat.completion",
+    model: "some/reasoning-model",
+    choices: [
+      {
+        index: 0,
+        finish_reason: "length",
+        message: { role: "assistant", content: null, reasoning: "still thinking" },
+      },
+    ],
+    usage: { prompt_tokens: 12, completion_tokens: 4096 },
+  };
+}
+
+test("a response cut off by the output cap is a model failure, not an unparseable body", async () => {
+  // The provider returns a perfectly well-formed body that says the model ran out of
+  // room before answering. Reporting that as "unparseable" sends the reader looking in
+  // the wrong place, and retrying it five times reaches the same conclusion slower.
+  await withStubCompletion(truncatedBody(), async (adapter) => {
+    await assert.rejects(
+      () => adapter.complete({ prompt: "hello", temperature: 0, topP: 1, maxTokens: 4096 }),
+      (err: unknown) =>
+        err instanceof ModelTruncatedError && !(err instanceof InfrastructureError),
+    );
+  });
+});
+
+test("a completed response with no content is an empty answer, not an error", async () => {
+  await withStubCompletion(
+    {
+      choices: [
+        { index: 0, finish_reason: "stop", message: { role: "assistant", content: null } },
+      ],
+      usage: { prompt_tokens: 5, completion_tokens: 0 },
+    },
+    async (adapter) => {
+      const completion = await adapter.complete({
+        prompt: "hello",
+        temperature: 0,
+        topP: 1,
+        maxTokens: 4096,
+      });
+      assert.equal(completion.text, "");
+      assert.equal(completion.promptTokens, 5);
+    },
+  );
+});
+
+test("running out of output budget is scored as a model failure and not retried", async () => {
+  let calls = 0;
+  const truncating: ModelAdapter = {
+    id: "truncating",
+    async complete() {
+      calls++;
+      throw new ModelTruncatedError("model hit the 4096-token output cap before answering", {
+        promptTokens: 120,
+        completionTokens: 4096,
+      });
+    },
+  };
+
+  const instance = instantiate(PUBLIC_SEED, "public").find((i) => !i.judgeGraded)!;
+  const result = await runItem(instance, { model: truncating, judge: null });
+
+  assert.equal(result.modelFailed, true);
+  assert.equal(result.truncated, true);
+  assert.equal(result.fraction, 0);
+  assert.equal(result.infraRetries, 0);
+  assert.equal(calls, 1, "a truncated response must not be retried");
+  assert.equal(result.promptTokens, 120, "a capped call still consumed tokens");
+  assert.equal(result.completionTokens, 4096);
+});
+
+test("extra body parameters reach the request without disturbing the answer budget", async () => {
+  const { createServer } = await import("node:http");
+  const { createHttpAdapter } = await import("../src/adapters.ts");
+
+  let seen: Record<string, unknown> = {};
+  const server = createServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      seen = JSON.parse(body) as Record<string, unknown>;
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          choices: [
+            { index: 0, finish_reason: "stop", message: { role: "assistant", content: "ok" } },
+          ],
+        }),
+      );
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+
+  try {
+    const address = server.address();
+    assert.ok(address && typeof address === "object");
+    const adapter = createHttpAdapter({
+      id: "stub",
+      baseUrl: `http://127.0.0.1:${address.port}/v1`,
+      apiKey: "test",
+      model: "reasoning-model",
+      extraBody: { reasoning: { max_tokens: 4096 } },
+    });
+
+    await adapter.complete({ prompt: "hello", temperature: 0, topP: 1, maxTokens: 2048 });
+
+    // The thinking allowance is set separately, so the answer budget stays its own thing.
+    assert.deepEqual(seen["reasoning"], { max_tokens: 4096 });
+    assert.equal(seen["max_tokens"], 2048);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
+
+// ===========================================================================
+// 12. Held-out seed custody
+// ===========================================================================
+
+test("a generated held-out seed is long, prefixed, and different every time", () => {
+  const a = generateSeed();
+  const b = generateSeed();
+  assert.notEqual(a, b, "two generated seeds must not collide");
+  assert.match(a, /^esac-gi-heldout-[0-9a-f]{64}$/);
+});
+
+test("a seed is resolved from the flag, then the environment, then the file", () => {
+  const dir = mkdtempSync(join(tmpdir(), "esac-seed-"));
+  const path = join(dir, "seed");
+
+  // Nothing anywhere: the caller is told, rather than handed a seed invented here.
+  assert.equal(resolveHeldOutSeed({ path }), null);
+
+  writeSeedFile("stored-seed", { path });
+  assert.deepEqual(resolveHeldOutSeed({ path }), { seed: "stored-seed", source: "file" });
+  assert.deepEqual(resolveHeldOutSeed({ environment: "from-env", path }), {
+    seed: "from-env",
+    source: "environment",
+  });
+  assert.deepEqual(resolveHeldOutSeed({ explicit: "from-flag", environment: "from-env", path }), {
+    seed: "from-flag",
+    source: "flag",
+  });
+
+  // A blank value is not a seed, so it falls through instead of selecting a blank pool.
+  assert.deepEqual(resolveHeldOutSeed({ environment: "   ", path }), {
+    seed: "stored-seed",
+    source: "file",
+  });
+});
+
+test("a stored seed is never replaced by accident, and never read as a blank", () => {
+  const dir = mkdtempSync(join(tmpdir(), "esac-seed-"));
+  const path = join(dir, "nested", "seed");
+
+  // Writing the first seed creates the directory chain.
+  writeSeedFile("first", { path });
+  assert.equal(readSeedFile(path), "first");
+  assert.throws(() => writeSeedFile("second", { path }), /already holds a held-out seed/);
+  assert.equal(readSeedFile(path), "first", "a refused write must leave the seed alone");
+
+  writeSeedFile("second", { path, force: true });
+  assert.equal(readSeedFile(path), "second");
+
+  const empty = join(dir, "empty");
+  writeFileSync(empty, "  \n", "utf8");
+  assert.equal(readSeedFile(empty), null, "whitespace is not a seed");
+  assert.equal(readSeedFile(join(dir, "absent")), null);
+  assert.match(missingSeedMessage(), /must not be committed/);
+});
+
+test("a generated seed produces a complete held-out pool that is not the public one", () => {
+  const held = instantiate(generateSeed(), "heldout");
+  const pub = instantiate(PUBLIC_SEED, "public");
+
+  assert.equal(held.length, TOTAL_ITEMS);
+  const differing = held.filter(
+    (h) => pub.find((p) => p.itemId === h.itemId)!.fingerprint !== h.fingerprint,
+  );
+  assert.ok(
+    differing.length > 30,
+    `most items must differ across seeds, but only ${differing.length} did`,
   );
 });

@@ -17,7 +17,7 @@
 
 import { deriveSeed, makeRng, fnv1a, fingerprint as fingerprintOf } from "./rng.ts";
 import { CATEGORIES, CATEGORY_BY_ID } from "./categories.ts";
-import type { CategoryId, Instance, ItemTemplate, Split } from "./types.ts";
+import type { CategoryId, Instance, ItemTemplate, TemplateSplit } from "./types.ts";
 import { LOGIC_ITEMS } from "./items/logic.ts";
 import { MATH_ITEMS } from "./items/math.ts";
 import { FACTUAL_ITEMS } from "./items/factual.ts";
@@ -47,7 +47,7 @@ export function instantiateAll(datasetSeed: string, pool: "public" | "heldout"):
   const out: Instance[] = [];
 
   for (const template of ALL_ITEMS) {
-    const split: Split = template.split ?? "both";
+    const split: TemplateSplit = template.split ?? "both";
     if (!appliesToPool(split, pool)) continue;
 
     // The seed depends only on (datasetSeed, itemId), never on the run.
@@ -87,7 +87,7 @@ export function instantiateAll(datasetSeed: string, pool: "public" | "heldout"):
   return out;
 }
 
-function appliesToPool(split: Split, pool: "public" | "heldout"): boolean {
+function appliesToPool(split: TemplateSplit, pool: "public" | "heldout"): boolean {
   return split === "both" || split === pool;
 }
 

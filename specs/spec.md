@@ -186,11 +186,14 @@ from re-becoming a five-hour test by accident.
 
 Three questions were left open in the original basis.
 
-- **Judge model pinning.** Pin one fixed open-weight judge version per benchmark release
-  (for example, "ESAC v1.0 uses GLM-4.6 as judge, pinned") so that rubric scores do not
-  drift silently when the judge model is updated upstream.
-  *Status: required by tenet 3, and reflected in the harness, which records the judge
-  identity with every run.*
+- **Judge model pinning.** Pin one fixed open-weight judge version per benchmark release,
+  so that rubric scores do not drift silently when the judge model is updated upstream.
+  The release names one judge version and treats it as fixed.
+  *Status: resolved for v1.0. The judge pinned for this release is
+  `xiaomi/mimo-v2.6-pro`, an open-weight model chosen for general capability and for an
+  absence of bias in its chain of thought in the maintainers' private testing. A run
+  under any other judge is reported without a verdict rather than as an ESAC-GI score,
+  because the judge decides one of the eight categories and therefore the outcome.*
 - **Ensemble judging.** Whether rubric items should be scored by one judge model or by
   two-out-of-three voting, to damp single-model idiosyncrasy in the writing and ambiguity
   categories. *Status: resolved by Part II §5, which adopts repeated judging rather than
@@ -393,6 +396,12 @@ A returned empty answer, an ordinary refusal, or a model-generated statement of 
 is a model response and is scored according to the task. On a normally answerable item,
 such a response is incorrect. Where the benchmark explicitly allows an abstention or a
 decline, the task's own scoring rules determine whether it is valid.
+
+The same applies to a model that reaches the item's output budget without producing an
+answer. That budget is part of the benchmark definition, like the time budget, and is set
+generously enough that it is not what decides a score. Such a response is a model failure,
+and it is not retried, because repeating the request under the same budget reaches the same
+conclusion.
 
 By contrast, API errors, transport failures, rate limits, evaluator-side failures,
 mock-environment failures, and any other case where a valid model response was never

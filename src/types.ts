@@ -115,6 +115,19 @@ export interface Rubric {
 // ---------------------------------------------------------------------------
 
 /**
+ * Which pool a run is scored against.
+ *
+ * A pool is not a stored set of items: both pools come from the same templates, and the
+ * only difference is the dataset seed an instance is derived from. Naming a pool
+ * therefore names which seed the run must resolve.
+ *
+ * There is deliberately no combined mode. One run means one pool, one seed, and one set
+ * of instances; a public-versus-held-out comparison is two runs, which keeps every report
+ * attributable to a single seed.
+ */
+export type Split = "public" | "heldout";
+
+/**
  * Which pool(s) a template contributes instances to.
  *
  * `both` is the default and the reason the split is content-balanced by
@@ -123,7 +136,7 @@ export interface Rubric {
  * instances rather than templates means every category has held-out coverage
  * without hand-partitioning a small bank.
  */
-export type Split = "public" | "heldout" | "both";
+export type TemplateSplit = "public" | "heldout" | "both";
 
 /** One graded sub-question within an item. Partial credit is per-check. */
 export interface Check {
@@ -178,8 +191,8 @@ export interface Instance {
 export interface ItemTemplate {
   readonly id: string;
   readonly category: CategoryId;
-  /** Defaults to `both`. */
-  readonly split?: Split;
+  /** Defaults to `both`, which is every template in the current bank. */
+  readonly split?: TemplateSplit;
   /** Defaults to 1. Overridden per category by the scorer. */
   readonly points?: number;
   /**
@@ -299,6 +312,30 @@ export class ModelTimeoutError extends Error {
   }
 }
 
+/**
+ * Thrown when the evaluated model produced no answer within the item's output budget.
+ *
+ * A model failure rather than an infrastructure failure: the provider returned a valid
+ * response, and that response says the model was still working when it ran out of room.
+ * It is not retried, because the same budget produces the same outcome, and retrying it
+ * would only spend time and money to reach the same conclusion.
+ */
+export class ModelTruncatedError extends Error {
+  override readonly name = "ModelTruncatedError";
+  /** Tokens the call consumed before being cut off. Zero when the provider said nothing. */
+  readonly promptTokens: number;
+  readonly completionTokens: number;
+
+  constructor(
+    message = "model hit the output cap before answering",
+    usage?: { readonly promptTokens: number; readonly completionTokens: number },
+  ) {
+    super(message);
+    this.promptTokens = usage?.promptTokens ?? 0;
+    this.completionTokens = usage?.completionTokens ?? 0;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Results
 // ---------------------------------------------------------------------------
@@ -330,6 +367,8 @@ export interface ItemRunResult {
   readonly completionTokens: number;
   /** Model-side failure (scored zero), as distinct from infrastructure failure. */
   readonly modelFailed: boolean;
+  /** The failure was the output cap being reached, not a wrong or empty answer. */
+  readonly truncated: boolean;
 }
 
 export interface CategoryScore {
@@ -343,15 +382,33 @@ export interface CategoryScore {
   readonly passed: boolean;
 }
 
+/**
+ * What a run is allowed to claim.
+ *
+ * - `pass` and `fail` are the two verdicts a complete run under the pinned judge can
+ *   produce, and the only two for which the pass criteria mean anything.
+ * - `incomplete` means items were skipped, so the percentage is quoted against the full
+ *   suite while only part of it was attempted.
+ * - `not-valid` means the judge was not the judge pinned for this release. That judge
+ *   decides a whole category, so the number is not an ESAC-GI score and no verdict is
+ *   given either way.
+ */
+export type Verdict = "pass" | "fail" | "incomplete" | "not-valid";
+
 export interface RunReport {
   readonly suite: string;
   readonly version: string;
   readonly versionTag: string;
   readonly fullName: string;
-  readonly split: "public" | "heldout" | "both";
+  readonly split: Split;
   readonly datasetSeedFingerprint: string;
   readonly model: string;
   readonly judge: string | null;
+  /**
+   * Whether the judge was the model pinned for this release. Recorded so that a run
+   * graded by something else is visible in the report rather than silent.
+   */
+  readonly judgePinned: boolean;
   readonly startedAt: string;
   readonly durationMs: number;
   readonly categories: readonly CategoryScore[];
@@ -364,9 +421,17 @@ export interface RunReport {
    */
   readonly attemptedPoints: number;
   readonly normalized: number;
+  /** True only for a valid pass. Derived from `verdict`, never set independently. */
   readonly passed: boolean;
+  /** The single authority on what this run may claim. */
+  readonly verdict: Verdict;
   readonly failedCategories: readonly CategoryId[];
   /** Share of suite points that depend on a judge. Reported explicitly. */
   readonly judgeGradedPoints: number;
+  /**
+   * Output cap applied to the model under test. Recorded because it is part of the
+   * measurement: scores produced at different caps are not strictly comparable.
+   */
+  readonly maxTokens: number;
   readonly items: readonly ItemRunResult[];
 }

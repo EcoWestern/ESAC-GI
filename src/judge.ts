@@ -5,7 +5,8 @@
  * - Tenet 3: the judge must be open-weight and self-hostable, and version-pinned
  *   per release. A rubric score that silently drifts because the judge model was
  *   updated upstream is a reproducibility failure, so rubrics are versioned by id
- *   and the judge model identity is recorded in every run.
+ *   and the judge model identity is recorded in every run. `PINNED_JUDGE` in
+ *   `version.ts` names the model reserved for that role.
  * - Resolution 5: judge-graded items run the model twice and judge each response
  *   twice, averaging the four observations. Nothing in this file assumes a single
  *   observation.

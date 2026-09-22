@@ -22,7 +22,7 @@
 
 import { gradeChecks, clamp01 } from "./graders.ts";
 import { meanFraction, parseJudgeResponse, scoreRubric } from "./judge.ts";
-import { INFRA_RETRY, REPLICATION, DECODING } from "./version.ts";
+import { INFRA_RETRY, REPLICATION, DECODING, OUTPUT_LIMITS } from "./version.ts";
 import type {
   Instance,
   ItemRunResult,
@@ -32,16 +32,18 @@ import type {
   CheckResult,
   Rubric,
 } from "./types.ts";
-import { InfrastructureError, ModelTimeoutError } from "./types.ts";
+import { InfrastructureError, ModelTimeoutError, ModelTruncatedError } from "./types.ts";
 
 export interface RunOptions {
   readonly model: ModelAdapter;
   /** Null when running a pool that contains no judge-graded items. */
   readonly judge: JudgeAdapter | null;
-  /** Per-item output cap. Defaults are deliberately tight. */
+  /**
+   * Per-item output cap for the model under test. Defaults to the benchmark's own limit,
+   * which is deliberately generous because a reasoning model spends most of a cap before
+   * it emits any answer at all.
+   */
   readonly maxTokens?: number;
-  readonly deterministic?: { readonly maxTokens: number };
-  readonly judgeMaxTokens?: number;
   /** Per-item wall clock budget for the model under test. Exceeding it is a model failure. */
   readonly itemTimeoutMs?: number;
   /** Called after each item resolves, for the live tally. */
@@ -115,6 +117,7 @@ interface CallOutcome {
   readonly promptTokens: number;
   readonly completionTokens: number;
   readonly modelFailed: boolean;
+  readonly truncated: boolean;
   readonly failureDetail: string | null;
 }
 
@@ -123,9 +126,7 @@ async function callModelWithRetries(
   instance: Instance,
   options: RunOptions,
 ): Promise<CallOutcome> {
-  const maxTokens = instance.judgeGraded
-    ? (options.deterministic?.maxTokens ?? options.maxTokens ?? 1024)
-    : (options.maxTokens ?? 512);
+  const maxTokens = options.maxTokens ?? OUTPUT_LIMITS.modelTokens;
 
   let infraRetries = 0;
   let lastError: string | null = null;
@@ -149,18 +150,27 @@ async function callModelWithRetries(
         promptTokens: response.promptTokens ?? 0,
         completionTokens: response.completionTokens ?? 0,
         modelFailed: false,
+        truncated: false,
         failureDetail: null,
       };
     } catch (err) {
       // A timeout of the model under test is a model failure, not an infrastructure
-      // failure (agreed pre-build: "model/task timeout = failure").
-      if (err instanceof ModelTimeoutError) {
+      // failure (agreed pre-build: "model/task timeout = failure"). Running out of output
+      // budget is the same kind of thing: the model did not answer within its allowance.
+      if (err instanceof ModelTimeoutError || err instanceof ModelTruncatedError) {
+        // A capped call still consumed its tokens. Dropping them would understate the cost
+        // of precisely the runs that were most expensive.
+        const usage =
+          err instanceof ModelTruncatedError
+            ? { promptTokens: err.promptTokens, completionTokens: err.completionTokens }
+            : { promptTokens: 0, completionTokens: 0 };
         return {
           text: null,
           infraRetries,
-          promptTokens: 0,
-          completionTokens: 0,
+          promptTokens: usage.promptTokens,
+          completionTokens: usage.completionTokens,
           modelFailed: true,
+          truncated: err instanceof ModelTruncatedError,
           failureDetail: err.message,
         };
       }
@@ -218,6 +228,7 @@ export async function runItem(instance: Instance, options: RunOptions): Promise<
   const observations: number[] = [];
   const checkResults: CheckResult[] = [];
   let modelFailed = false;
+  let truncated = false;
   let failureDetail: string | null = null;
 
   for (let run = 0; run < modelRuns; run++) {
@@ -228,6 +239,7 @@ export async function runItem(instance: Instance, options: RunOptions): Promise<
 
     if (outcome.modelFailed || outcome.text === null) {
       modelFailed = true;
+      if (outcome.truncated) truncated = true;
       failureDetail = outcome.failureDetail;
       // A failed model run contributes zero, and does not stop the item: the other
       // replication still produces a genuine observation.
@@ -322,6 +334,7 @@ export async function runItem(instance: Instance, options: RunOptions): Promise<
     promptTokens,
     completionTokens,
     modelFailed,
+    truncated,
   };
 }
 
