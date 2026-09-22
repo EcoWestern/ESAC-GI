@@ -18,7 +18,7 @@ user data, so the realistic risks are not the usual web-application ones. The
 following are genuine vulnerabilities:
 
 - **Held-out seed or key disclosure.** The held-out pool is only meaningful while
-  its seed stays private (`specs/spec.md`, Part II §3). Any path that causes the
+  its seed stays private (`amendment 001 §3`). Any path that causes the
   held-out seed, a held-out scoring key, or held-out instance text to be written
   into a committed file, a log, or a public report.
 - **Canary exposure.** The canary string in `src/version.ts` exists to detect
@@ -52,6 +52,6 @@ following are genuine vulnerabilities:
 - The report is confirmed and assessed.
 - If it is a benchmark-integrity issue, the maintainers decide whether items need
   rotating (a minor-version change) or scoring needs changing (a major-version
-  change, per `specs/spec.md`, Part II §9).
+  change, per `amendment 001 §9`).
 - Once a fix is available, it is released with a changelog entry. Reporters are
   credited unless they prefer otherwise.

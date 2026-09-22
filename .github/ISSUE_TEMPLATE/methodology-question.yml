@@ -6,9 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Many design questions are already answered in `specs/spec.md`. Part I is the
-        original design basis and Part II is the first amendment, which governs where
-        the two disagree. Questions that the specification does not settle are welcome
+        Many design questions are already answered by the ESAC constitution and its
+        amendments, which live in the program repository at github.com/EcoWestern/ESAC.
+        Where an amendment and the constitution disagree, the amendment governs. Questions that the specification does not settle are welcome
         here.
 
   - type: input

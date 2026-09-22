@@ -1,7 +1,7 @@
 /**
  * Deterministic, dependency-free PRNG and hashing.
  *
- * Reproducibility requirement (first-amendment §4): where an item is parametrized,
+ * Reproducibility requirement (amendment 001 §4): where an item is parametrized,
  * its generation logic must be reproducible. Everything here is pure and stable
  * across platforms and Node versions: no Math.random, no Date, no locale.
  */

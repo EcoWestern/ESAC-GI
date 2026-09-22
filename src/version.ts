@@ -3,7 +3,7 @@
  *
  * Tenet 5: "Every score is meaningless without a version tag."
  *
- * Per `specs/spec.md`, Part II (first amendment) §9, version numbers are meaningful:
+ * Per `amendment 001 §9` of the ESAC specification, version numbers are meaningful:
  *   - MINOR releases change content/organisation but not what the score measures
  *     (item rotation, new parametrized instances, prompt edits).
  *   - MAJOR releases change the measurement itself (scoring methodology, judging
@@ -120,7 +120,7 @@ export const OUTPUT_LIMITS = {
 } as const;
 
 /**
- * Replication protocol (first-amendment §5).
+ * Replication protocol (amendment 001 §5).
  *
  * Judge-graded items: the evaluated model is run twice; each response is judged
  * twice; the four observations are averaged.
@@ -132,7 +132,7 @@ export const REPLICATION = {
   judgeJudgmentsPerResponse: 2,
 } as const;
 
-/** Passing criteria (first-amendment §10). Defined from v1.0, never retrofitted. */
+/** Passing criteria (amendment 001 §10). Defined from v1.0, never retrofitted. */
 export const PASS_THRESHOLD = {
   /** Every capability category must reach this fraction of its points. */
   perCategory: 0.6,
@@ -140,7 +140,7 @@ export const PASS_THRESHOLD = {
   overall: 0.6,
 } as const;
 
-/** Infrastructure retry policy (first-amendment §8). Infra retries never score. */
+/** Infrastructure retry policy (amendment 001 §8). Infra retries never score. */
 export const INFRA_RETRY = {
   maxAttempts: 5,
   baseDelayMs: 500,

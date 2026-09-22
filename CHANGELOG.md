@@ -8,7 +8,11 @@ Two version numbers appear in this project and they are not the same thing:
   score is reported against and which governs cross-version comparability; and
 - the **repository/package version** in `package.json`, which tracks the code.
 
-Per `specs/spec.md` (Part II §9), a minor benchmark change alters content or
+The specification is not in this repository. It lives in the program repository,
+[EcoWestern/ESAC](https://github.com/EcoWestern/ESAC), as a constitution plus numbered
+amendments, and the citations below use its section numbers.
+
+Per `amendment 001 §9`, a minor benchmark change alters content or
 organisation without changing what the score measures; a major change alters the
 measurement itself, and scores stop being comparable across it.
 
@@ -38,6 +42,17 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   organisation with the notice in `.github/pull-request-notice.md` and closes it. Members,
   collaborators, and maintainers are exempt. Until now `CONTRIBUTING.md` said pull requests
   were closed without review while nothing actually closed them.
+
+### Changed
+
+- **The specification moved out of this repository.** It now lives in the program repository,
+  [EcoWestern/ESAC](https://github.com/EcoWestern/ESAC), as a constitution plus numbered
+  amendments. It covers both ESAC suites, and a document amended in place cannot be cited
+  safely: a clause rewritten under a citation silently changes what the citation means.
+  `specs/spec.md` is gone, `specs/README.md` says where it went, and source comments that
+  cited `first-amendment §N` now cite `amendment 001 §N`.
+- **`specs/scoring.md` stays here.** It is the operational reference for this instrument: the
+  structure of a run, the criteria behind every item, and the judge rubrics.
 
 ## [1.0.0] - 2026-09-22
 
@@ -113,8 +128,9 @@ The first public source release of ESAC-GI.
   reference answers score 100 percent on their own checks, that thresholds behave at
   exactly the boundary, that a pool name selects no items of its own, and that a generated
   held-out seed produces a complete pool which is not the public one.
-- **Written documentation.** `specs/spec.md` carries the design in two parts, the original
-  basis and the first amendment that governs. `specs/scoring.md` is the operational
+- **Written documentation.** The specification is in the program repository,
+  [EcoWestern/ESAC](https://github.com/EcoWestern/ESAC): a constitution plus numbered
+  amendments. `specs/scoring.md` here is the operational
   companion: the structure of a run, how every point is awarded, the check-level criteria
   for all forty-two items, and the full text of the four judge rubrics.
 - **Public repository files.** MIT licence, contribution policy, security policy,

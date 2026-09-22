@@ -110,7 +110,7 @@ export function seedFingerprint(datasetSeed: string): string {
 /**
  * Per-item point value, honouring the per-template weight override.
  *
- * The response-depth boundary item carries weight 0.5 (first-amendment §2). Weights
+ * The response-depth boundary item carries weight 0.5 (amendment 001 §2). Weights
  * are applied as a share of the category pool, so the category still totals its full
  * allocation: with weights 1,1,1,1,0.5 the four normal items each receive
  * `points * (1/4.5)` and the boundary item receives half of that.

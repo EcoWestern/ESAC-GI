@@ -40,7 +40,7 @@ document but is not implemented here.
 - [What this benchmark does not claim](#what-this-benchmark-does-not-claim)
 - [Versioning](#versioning)
 - [Repository layout](#repository-layout)
-- [Design specification](#design-specification)
+- [Specification and scoring](#specification-and-scoring)
 - [Tests](#tests)
 - [Repository settings](#repository-settings)
 - [Contributing, security, and licence](#contributing-security-and-licence)
@@ -485,8 +485,7 @@ src/
 public/
   esac-gi-v1.0-public.jsonl   the distributable public pool
 specs/
-  spec.md             the design specification: Part I is the original basis,
-                      Part II is the first amendment, which governs
+  README.md           where the specification lives, and what stays here
   scoring.md          the scoring reference: run structure, per-category
                       scoring, and the criteria behind every point
 tests/all.test.ts     the test suite
@@ -501,24 +500,22 @@ CITATION.cff          citation metadata
 LICENSE               MIT
 ```
 
-## Design specification
+## Specification and scoring
 
-`specs/spec.md` is the design specification, in two parts:
+The design specification is not in this repository. It lives in the program repository,
+[EcoWestern/ESAC](https://github.com/EcoWestern/ESAC), as a constitution plus numbered
+amendments: the constitution is the design basis, in numbered sections, and each amendment is
+a separate file naming the provisions it supersedes. Where the two disagree, the amendment
+governs.
 
-- **Part I** is the original design basis, including the reasoning behind it and the
-  questions that were still open at the time.
-- **Part II** is the first amendment: ten decisions that supersede specific clauses in
-  Part I, and that govern wherever the two disagree.
+That split exists so citations keep resolving. This repository cites sections as
+`constitution §4` or `amendment 001 §2`, and those numbers mean the same thing today as when
+the comment around them was written.
 
-The document is kept in that shape rather than flattened, because the reasoning behind an
-instrument is part of the instrument, and because it should be visible what changed and
-why.
-
-For the operational side of the same instrument, `specs/scoring.md` documents how a run is
-structured, how each point is awarded, and the criteria behind every item: the run order,
-the replication protocol, the dual 60 percent gate, the check-level criteria for all forty
-items, and the full text of the four judge rubrics. The specification says why; the scoring
-reference says what.
+What stays here is the operational side of the same instrument: `specs/scoring.md` documents
+how a run is structured, how each point is awarded, and the criteria behind every item,
+including the check-level criteria for all forty-two items and the full text of the four judge
+rubrics. The specification says why; the scoring reference says what.
 
 ## Tests
 

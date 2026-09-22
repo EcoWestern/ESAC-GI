@@ -2,11 +2,12 @@
 
 **What the instrument does, category by category.**
 
-This document is the operational companion to `spec.md`. The specification says *why* the
-benchmark is shaped the way it is; this says *what* it measures and *how* each point is
-awarded. Where the two disagree about the reasoning, `spec.md` governs. Where either
-disagrees with the harness, the harness is authoritative, because it is what produces a
-score.
+This document is the operational companion to the ESAC specification, which lives in the
+program repository, [EcoWestern/ESAC](https://github.com/EcoWestern/ESAC), as a constitution
+plus numbered amendments. That says *why* the benchmark is shaped the way it is; this says
+*what* it measures and *how* each point is awarded. Where the two disagree about the
+reasoning, the specification governs; where either disagrees with the harness, the harness is
+authoritative, because it is what produces a score.
 
 Every figure here was read out of the generators and graders. The quickest way to check
 any of it against the running code:

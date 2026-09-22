@@ -34,7 +34,7 @@ export interface CategoryDef {
   readonly name: string;
   /** Points awarded at a perfect score. */
   readonly points: number;
-  /** Number of item templates. Fixed by first-amendment §6 for GI. */
+  /** Number of item templates. Fixed by amendment 001 §6 for GI. */
   readonly itemCount: number;
   /**
    * Whether this category is graded deterministically, by the pinned judge, or both.
@@ -197,7 +197,7 @@ export interface ItemTemplate {
   readonly points?: number;
   /**
    * Optional per-release weights. The response-depth boundary item uses 0.5 here
-   * (first-amendment §2).
+   * (amendment 001 §2).
    */
   readonly weight?: number;
   /** Human-readable note on what the item measures. Not sent to the model. */
@@ -248,7 +248,7 @@ export interface ModelResponse {
  * Model under test.
  *
  * `infrastructure` distinguishes a scored model response from an evaluation that
- * could not be completed (first-amendment §8). Throwing anything else is treated
+ * could not be completed (amendment 001 §8). Throwing anything else is treated
  * as an infrastructure failure by the runner.
  */
 export interface ModelAdapter {
@@ -288,7 +288,7 @@ export interface JudgeResponse {
 
 /**
  * Raised by adapters when no valid model response was obtained. Never scores.
- * The runner retries these under identical conditions (first-amendment §8).
+ * The runner retries these under identical conditions (amendment 001 §8).
  *
  * Written without constructor parameter properties so the file is valid under
  * Node's strip-only TypeScript mode, which the benchmark relies on to stay

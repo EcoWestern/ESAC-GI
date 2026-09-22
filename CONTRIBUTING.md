@@ -16,10 +16,10 @@ piece of work. It is load-bearing for the benchmark:
   trusted revision. If item generators, graders, or scoring rules could change
   through external pull requests, "58/75 on ESAC-GI v1.0" would not reliably mean
   the same thing twice.
-- **Held-out custody.** Part II §3 of `specs/spec.md` puts hidden evaluation
-  material under a small, accountable set of maintainers. An open merge path
+- **Held-out custody.** `constitution §3`, as amended by `amendment 001 §3`, puts hidden
+  evaluation material under a small, accountable set of maintainers. An open merge path
   would weaken that control for no corresponding gain.
-- **Version integrity.** Part II §9 makes any change to scoring, judging, or
+- **Version integrity.** `amendment 001 §9` makes any change to scoring, judging, or
   pass criteria a major-version change. Accepting external patches to those areas
   would force major-version increments for changes nobody asked to be made.
 

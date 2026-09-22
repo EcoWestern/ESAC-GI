@@ -76,7 +76,7 @@ body:
     attributes:
       label: Before filing
       options:
-        - label: I have read `specs/spec.md` (Part I is the original design basis, Part II is the first amendment), and this is not a documented design decision, such as the public pool being inferable or a judge-graded category being a small sample.
+        - label: I have read the ESAC specification (the constitution and its amendments, in the program repository), and this is not a documented design decision, such as the public pool being inferable or a judge-graded category being a small sample.
           required: true
         - label: I have searched existing issues for the same report.
           required: true

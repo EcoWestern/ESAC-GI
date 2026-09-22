@@ -3,9 +3,9 @@ contact_links:
   - name: Report a security issue, a held-out seed leak, or a judge-manipulation example
     url: https://github.com/EcoWestern/ESAC-GI/security/advisories/new
     about: "Please report vulnerabilities privately. Do not open a public issue for these."
-  - name: Read the design specification before filing
-    url: https://github.com/EcoWestern/ESAC-GI/blob/main/specs/spec.md
-    about: "Most design questions are already answered in specs/spec.md. Part I is the original design basis and Part II is the first amendment, which governs where the two disagree."
+  - name: Read the specification before filing
+    url: https://github.com/EcoWestern/ESAC/blob/main/specs/constitution.md
+    about: "Most design questions are already answered by the ESAC constitution and its amendments, which live in the program repository. Where an amendment and the constitution disagree, the amendment governs."
   - name: Read the contribution policy
     url: https://github.com/EcoWestern/ESAC-GI/blob/main/CONTRIBUTING.md
     about: "Pull requests are not accepted. Issues and forks are welcome."

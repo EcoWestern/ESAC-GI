@@ -1,7 +1,7 @@
 /**
  * Category 8: Response-depth calibration (5 items, 5 pts).
  *
- * Construct (Part II §2 of the design specification): whether the model can infer
+ * Construct (amendment 001 §2 of the design specification): whether the model can infer
  * the *appropriate depth of response from contextual cues*, and not whether it can
  * follow an explicit "be concise" or "be detailed" instruction, or raw response
  * length.
@@ -10,7 +10,7 @@
  * prompt. The depth cue must be carried by the situation: who is asking, what they
  * will do with the answer, and what the medium is.
  *
- * Structure (first-amendment §2):
+ * Structure (amendment 001 §2):
  *   - 2 items where a substantive response is appropriate
  *   - 2 items where a concise response is appropriate
  *   - 1 boundary item where either is acceptable, carrying half the weight of a
@@ -26,7 +26,7 @@
  * Items are authored prompt families rather than parametrized templates: the depth
  * cue *is* the context, and scrambling that context to defeat memorisation would
  * destroy the construct. Rotation happens at the scenario-pool level across releases
- * (first-amendment §4, which permits exactly this for items where parametrization
+ * (amendment 001 §4, which permits exactly this for items where parametrization
  * would change what is being measured).
  */
 
@@ -361,7 +361,7 @@ const boundary: ItemTemplate = {
   category: "depth",
   // Scenario pool, not a generated instance.
   parametrized: false,
-  // Half the weight of a normal item, per first-amendment §2.
+  // Half the weight of a normal item, per amendment 001 §2.
   weight: 0.5,
   measures:
     "Genuinely undetermined depth. Scored for coherence at whichever depth is chosen, not for the depth itself.",
