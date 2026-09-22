@@ -217,11 +217,7 @@ the file, so a CI secret is never shadowed by a stale `.env`. `.env.example` sho
 shape, and `.env` itself is gitignored.
 
 ```bash
-npm run esac -- run \
-  --model "https://api.example.com/v1|model-name|EXAMPLE_API_KEY" \
-  --judge "http://localhost:11434/v1|judge-model|OLLAMA_KEY" \
-  --json runs/example.json \
-  --verbose
+npm run esac -- run --model "https://api.example.com/v1|model-name|EXAMPLE_API_KEY" --judge "http://localhost:11434/v1|judge-model|OLLAMA_KEY" --json runs/example.json --verbose
 ```
 
 | Flag | Meaning |
@@ -248,11 +244,7 @@ the judge pinned for this release, behind one OpenAI-compatible endpoint and one
 the model under test and the independent judge are reached from the same place:
 
 ```bash
-npm run esac -- run \
-  --model "https://openrouter.ai/api/v1|deepseek/deepseek-chat|OPENROUTER_API_KEY" \
-  --judge "https://openrouter.ai/api/v1|xiaomi/mimo-v2.6-pro|OPENROUTER_API_KEY" \
-  --json runs/report.json \
-  --verbose
+npm run esac -- run --model "https://openrouter.ai/api/v1|deepseek/deepseek-chat|OPENROUTER_API_KEY" --judge "https://openrouter.ai/api/v1|xiaomi/mimo-v2.6-pro|OPENROUTER_API_KEY" --json runs/report.json --verbose
 ```
 
 Nothing above is OpenRouter-specific, though. A locally hosted judge works just as well,
@@ -619,22 +611,18 @@ openai-compatible, openrouter, cli, typescript, zero-dependencies, mit-license
 The two ways to set them. The description:
 
 ```bash
-gh repo edit EcoWestern/ESAC-GI \
-  --description "A short, cheap benchmark that measures difficult capabilities: 42 generated items, 75 points across 8 categories. 60 points graded deterministically, 15 by a pinned open-weight judge. Answers are computed from a seed rather than stored, so the repository is the whole artifact."
+gh repo edit EcoWestern/ESAC-GI --description "A short, cheap benchmark that measures difficult capabilities: 42 generated items, 75 points across 8 categories. 60 points graded deterministically, 15 by a pinned open-weight judge. Answers are computed from a seed rather than stored, so the repository is the whole artifact."
 ```
 
 And the topics, one flag per topic:
 
 ```bash
-gh repo edit EcoWestern/ESAC-GI \
-  --add-topic benchmark --add-topic ai-benchmark --add-topic llm \
-  --add-topic llm-benchmark --add-topic llm-evaluation --add-topic evaluation \
-  --add-topic general-intelligence --add-topic reproducibility \
-  --add-topic contamination --add-topic judge --add-topic rubric \
-  --add-topic scoring --add-topic openai-compatible --add-topic openrouter \
-  --add-topic cli --add-topic typescript --add-topic zero-dependencies \
-  --add-topic mit-license
+gh repo edit EcoWestern/ESAC-GI --add-topic benchmark --add-topic ai-benchmark --add-topic llm --add-topic llm-benchmark --add-topic llm-evaluation --add-topic evaluation --add-topic general-intelligence --add-topic reproducibility --add-topic contamination --add-topic judge --add-topic rubric --add-topic scoring --add-topic openai-compatible --add-topic openrouter --add-topic cli --add-topic typescript --add-topic zero-dependencies --add-topic mit-license
 ```
+
+Every command in this section is a single line on purpose. A trailing backslash is a bash
+continuation, and pasting one into PowerShell is a parse error that runs nothing at all,
+including the lines above it. Single lines paste into PowerShell, bash, and cmd unchanged.
 
 ### Publishing a release
 

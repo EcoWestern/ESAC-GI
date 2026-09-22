@@ -49,12 +49,13 @@ gh api repos/EcoWestern/ESAC-GI/commits/main/check-runs --jq '.check_runs[].name
 Then, with the GitHub CLI authenticated as a repository admin:
 
 ```bash
-gh api --method POST repos/EcoWestern/ESAC-GI/rulesets \
-  --input .github/rulesets/main.json
+gh api --method POST repos/EcoWestern/ESAC-GI/rulesets --input .github/rulesets/main.json
 
-gh api --method POST repos/EcoWestern/ESAC-GI/rulesets \
-  --input .github/rulesets/tags.json
+gh api --method POST repos/EcoWestern/ESAC-GI/rulesets --input .github/rulesets/tags.json
 ```
+
+Both are single lines on purpose: a trailing backslash is a bash continuation, and pasting
+one into PowerShell is a parse error that runs nothing at all.
 
 Or through the interface: **Settings**, then **Rules**, then **Rulesets**, then **New
 ruleset**, then **Import a ruleset** and choose the file. The interface also shows the
