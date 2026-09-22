@@ -1,0 +1,21 @@
+{
+  "name": "@ecowestern/esac-gi",
+  "version": "1.0.0",
+  "description": "ESAC-GI — EcoWestern Short and Cheap General Intelligence Benchmark. Item bank, harness, and scoring.",
+  "license": "MIT",
+  "author": "EcoWestern",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/all.test.ts",
+    "esac": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
