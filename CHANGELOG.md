@@ -33,10 +33,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   A published tag cannot be moved, so this is the last point at which a mistake is cheap.
 - **`CODEOWNERS`.** Every path is owned by the maintainer, so a fork pull request requests
   review automatically and a ruleset can require it if the policy ever changes.
-- **A repository settings checklist** in the README, covering the guarantees that live in
-  GitHub rather than in the repository: rulesets, the security features, private
-  vulnerability reporting, without which the reporting link in `SECURITY.md` does not work,
-  and the repository description and topic list.
+- **Maintainer notes** moved out of this README and into the program repository's
+  `MAINTAINERS.md`, beside the settings for both repositories. The checklist is unchanged:
+  rulesets, the security features, private vulnerability reporting, without which the reporting
+  link in `SECURITY.md` does not work, and the description and topics. A public README is written
+  for readers, and per-repository chores are not their business.
 - **The pull request policy is enforced, not just stated.**
   `.github/workflows/close-pull-requests.yml` answers a pull request from outside the
   organisation with the notice in `.github/pull-request-notice.md` and closes it. Members,

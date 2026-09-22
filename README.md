@@ -78,7 +78,7 @@ Three things are always reported together:
 ```
 $ npm run esac -- run --model <spec>
 EcoWestern Short and Cheap General Intelligence Benchmark, Version 1
-ESAC-GI v1.0  ·  split: public  ·  model: <spec>
+ESAC-GI v1.0  Â·  split: public  Â·  model: <spec>
 
 SCORE   48.25 / 75   (64.3%)
 RESULT  FAIL
@@ -165,7 +165,7 @@ Categories
 
   Start the run? [Y/n] >
 
-ESAC-GI v1.0  starting  ·  42 items  ·  model: deepseek/deepseek-chat@openrouter.ai  ·  judge: xiaomi/mimo-v2.6-pro@openrouter.ai
+ESAC-GI v1.0  starting  Â·  42 items  Â·  model: deepseek/deepseek-chat@openrouter.ai  Â·  judge: xiaomi/mimo-v2.6-pro@openrouter.ai
   Section results appear below as each section completes.
 
   [ 1/42] logic.seating                          100%
@@ -509,7 +509,7 @@ a separate file naming the provisions it supersedes. Where the two disagree, the
 governs.
 
 That split exists so citations keep resolving. This repository cites sections as
-`constitution §4` or `amendment 001 §2`, and those numbers mean the same thing today as when
+`constitution Â§4` or `amendment 001 Â§2`, and those numbers mean the same thing today as when
 the comment around them was written.
 
 What stays here is the operational side of the same instrument: `specs/scoring.md` documents
@@ -543,91 +543,6 @@ code runs:
 `npm run esac -- selftest` runs a comparable set of checks as a single offline command, and
 a perfect-oracle run reproduces exactly 75/75 through the full pipeline.
 
-## Repository settings
-
-Some of this project's guarantees are not files, and cannot be reviewed here: they are
-settings on the GitHub repository. They are listed so that a fork can reproduce them and so
-that none of them is silently lost.
-
-### Rulesets
-
-`.github/rulesets/` holds two rulesets as JSON: one for the default branch and one for
-release tags. They are not applied by pushing them. Apply each once per repository through
-**Settings**, **Rules**, then **Import a ruleset**, or with `gh api`. See
-`.github/rulesets/README.md` for the commands, for what each rule does, and for the one
-setting worth thinking about: the admin bypass, which is what lets the maintainer push to
-`main` directly instead of requiring a pull request.
-
-### Release check
-
-`.github/workflows/release.yml` runs on a `v*` tag and refuses a tag that disagrees with
-the code. It checks three things: that the tag matches the package version and the benchmark
-version in `src/version.ts`, that `CHANGELOG.md` has a section for that version, and that
-the tagged tree still reproduces the committed public pool. A published tag can never be
-moved, so this is the last moment at which a mistake is cheap.
-
-### Pull requests
-
-Practice matches policy here without anyone watching.
-`.github/workflows/close-pull-requests.yml` replies to a pull request from outside the
-organisation with the notice in `.github/pull-request-notice.md` and closes it, and it
-leaves maintainers, members, and collaborators alone. A declined pull request therefore
-comes with a reason and a route forward rather than silence, and the policy in
-`CONTRIBUTING.md` is enforced rather than merely stated.
-
-### Features to switch on
-
-| Setting | Where | Why it matters here |
-|---|---|---|
-| Private vulnerability reporting | Settings, Security | `SECURITY.md` and the issue templates both link to the private advisory form. Until this is enabled, that link does not work and there is no private route for a report. |
-| Dependabot alerts and security updates | Settings, Security | The project has no runtime dependencies, so the realistic risk is the dev toolchain. |
-| Secret scanning and push protection | Settings, Security | The repository should never hold a held-out seed or an API key. Push protection stops one arriving by accident. |
-| CodeQL default setup | Settings, Security | The CLI parses untrusted model output, so static analysis of the harness is worth having. |
-| Actions default workflow permissions | Settings, Actions | Keep the default read-only, so a workflow cannot write to the repository unless it asks. Every workflow here declares `contents: read`. |
-| Topics | Repository page | Set from the list below. Topics are how anyone finds this repository at all. |
-
-### Description and topics
-
-The repository description, ready to paste into the About panel. 277 characters, inside
-GitHub's limit of 350:
-
-> A short, cheap benchmark that measures difficult capabilities: 42 generated items, 75
-> points across 8 categories. 60 points graded deterministically, 15 by a pinned
-> open-weight judge. Answers are computed from a seed rather than stored, so the repository
-> is the whole artifact.
-
-Topics, most load-bearing first. Eighteen of GitHub's twenty slots, all lowercase and
-hyphenated as GitHub requires, and none longer than the 50 character cap:
-
-```
-benchmark, ai-benchmark, llm, llm-benchmark, llm-evaluation, evaluation,
-general-intelligence, reproducibility, contamination, judge, rubric, scoring,
-openai-compatible, openrouter, cli, typescript, zero-dependencies, mit-license
-```
-
-The two ways to set them. The description:
-
-```bash
-gh repo edit EcoWestern/ESAC-GI --description "A short, cheap benchmark that measures difficult capabilities: 42 generated items, 75 points across 8 categories. 60 points graded deterministically, 15 by a pinned open-weight judge. Answers are computed from a seed rather than stored, so the repository is the whole artifact."
-```
-
-And the topics, one flag per topic:
-
-```bash
-gh repo edit EcoWestern/ESAC-GI --add-topic benchmark --add-topic ai-benchmark --add-topic llm --add-topic llm-benchmark --add-topic llm-evaluation --add-topic evaluation --add-topic general-intelligence --add-topic reproducibility --add-topic contamination --add-topic judge --add-topic rubric --add-topic scoring --add-topic openai-compatible --add-topic openrouter --add-topic cli --add-topic typescript --add-topic zero-dependencies --add-topic mit-license
-```
-
-Every command in this section is a single line on purpose. A trailing backslash is a bash
-continuation, and pasting one into PowerShell is a parse error that runs nothing at all,
-including the lines above it. Single lines paste into PowerShell, bash, and cmd unchanged.
-
-### Publishing a release
-
-Push the tag, let the release check pass, then create the GitHub release at that tag and use
-the matching `CHANGELOG.md` section as the body. Do not move or delete a published tag:
-the ruleset refuses both, and a moved tag would make every score attributed to that version
-unattributable.
-
 ## Contributing, security, and licence
 
 ESAC-GI is published as source-available, to be read, run, audited, and forked. **Pull
@@ -642,8 +557,9 @@ trusted revision. Issues are open, and forks are welcome under the MIT licence.
 - `CITATION.cff` carries citation metadata. If you publish a comparative claim, cite the
   repository and state the version tag.
 
-MIT © EcoWestern. See `LICENSE`.
-
+MIT Â© EcoWestern. See `LICENSE`.
+Maintainer chores, including every setting that lives in a web form rather than in a file, are in
+the program repository's [MAINTAINERS.md](https://github.com/EcoWestern/ESAC/blob/main/MAINTAINERS.md).
 Forking is explicitly permitted. If you change what the benchmark measures, run it under
 your own name and version identity: a number only means something when it is attached to
 the instrument that produced it.
