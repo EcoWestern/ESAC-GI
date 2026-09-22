@@ -4,6 +4,11 @@ ESAC-GI is published as a source-available benchmark. The source is here to be
 read, run, audited, and forked. **Pull requests are not accepted**, and they are
 closed without review.
 
+That closure is automatic. A pull request from outside the organisation is answered with
+the notice in `.github/pull-request-notice.md` and closed by
+`.github/workflows/close-pull-requests.yml`, so it is declined with a reason and a route
+forward instead of silence. Maintainers, members, and collaborators are exempt from it.
+
 That is a policy decision about the instrument, not a judgement of any individual
 piece of work. It is load-bearing for the benchmark:
 

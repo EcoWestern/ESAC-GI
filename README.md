@@ -577,6 +577,15 @@ version in `src/version.ts`, that `CHANGELOG.md` has a section for that version,
 the tagged tree still reproduces the committed public pool. A published tag can never be
 moved, so this is the last moment at which a mistake is cheap.
 
+### Pull requests
+
+Practice matches policy here without anyone watching.
+`.github/workflows/close-pull-requests.yml` replies to a pull request from outside the
+organisation with the notice in `.github/pull-request-notice.md` and closes it, and it
+leaves maintainers, members, and collaborators alone. A declined pull request therefore
+comes with a reason and a route forward rather than silence, and the policy in
+`CONTRIBUTING.md` is enforced rather than merely stated.
+
 ### Features to switch on
 
 | Setting | Where | Why it matters here |

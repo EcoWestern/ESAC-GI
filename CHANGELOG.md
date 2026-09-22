@@ -32,6 +32,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **A repository settings checklist** in the README, covering the guarantees that live in
   GitHub rather than in the repository: rulesets, the security features, and private
   vulnerability reporting, without which the reporting link in `SECURITY.md` does not work.
+- **The pull request policy is enforced, not just stated.**
+  `.github/workflows/close-pull-requests.yml` answers a pull request from outside the
+  organisation with the notice in `.github/pull-request-notice.md` and closes it. Members,
+  collaborators, and maintainers are exempt. Until now `CONTRIBUTING.md` said pull requests
+  were closed without review while nothing actually closed them.
 
 ## [1.0.0] - 2026-09-22
 
