@@ -1,0 +1,85 @@
+name: Release
+
+# Runs when a version tag is pushed. CI on main is advisory: a tag is not. Published tags
+# are protected against deletion and moving (see .github/rulesets/tags.json), so whatever
+# this workflow finds on the tagged tree is what the version means for good.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-tag:
+    name: Tag matches the release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+
+      - name: Install dev dependencies
+        run: npm ci
+
+      # A tag is a claim about what the code says. Three places name the version, and a
+      # score is only attributable to a version if they agree.
+      - name: Tag, package version, and benchmark version must agree
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          bench="$(sed -n 's/^export const ESAC_VERSION = "\([^"]*\)";.*$/\1/p' src/version.ts)"
+          echo "tag:       $tag"
+          echo "package:   $pkg"
+          echo "benchmark: $bench"
+          if [ "$tag" != "$pkg" ] || [ "$tag" != "$bench" ]; then
+            echo "::error::${GITHUB_REF_NAME} disagrees with the code: package.json says ${pkg}, src/version.ts says ${bench}."
+            exit 1
+          fi
+
+      # A release with no release notes is a release nobody can read. The changelog is the
+      # release body, so the section has to exist before the tag does.
+      - name: The changelog has a section for this version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          if ! grep -q "^## \[${tag}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [${tag}]' section. Write the release notes first."
+            exit 1
+          fi
+          grep -m 1 -A 2 "^## \[${tag}\]" CHANGELOG.md
+
+      - name: Test the tagged tree
+        run: npm test
+
+      # CI checks this on main, and it is checked again here because a published tag can
+      # never be moved: the snapshot a tag ships with is the snapshot it keeps.
+      - name: The public pool is what the generators produce
+        run: |
+          npm run esac -- export --split public --out runs/public-check.jsonl
+          diff -u public/esac-gi-v1.0-public.jsonl runs/public-check.jsonl
+
+      - name: Summary
+        run: |
+          {
+            echo "### v${GITHUB_REF_NAME#v} verified"
+            echo ""
+            echo "Tag \`${GITHUB_REF_NAME}\` agrees with the code. Every check above ran on the"
+            echo "tagged tree itself, which matters because a published tag can never be moved."
+            echo ""
+            echo "| Check | Result |"
+            echo "|---|---|"
+            echo "| Tag, package version, and benchmark version agree | pass |"
+            echo "| Changelog section for this version | present |"
+            echo "| Test suite | pass |"
+            echo "| Public pool reproducible | pass |"
+            echo ""
+            echo '```'
+            npm run --silent esac -- version
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

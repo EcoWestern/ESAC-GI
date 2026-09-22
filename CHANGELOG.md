@@ -17,6 +17,22 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- **Repository rulesets as code.** `.github/rulesets/` carries the default-branch and
+  release-tag rulesets as JSON. Pushing them applies nothing: GitHub does not read this
+  directory, so each is imported once per repository. The instructions, and the reasoning
+  behind the admin bypass that keeps direct pushes to `main` working, are alongside them.
+- **A release check.** `.github/workflows/release.yml` runs on a version tag and refuses a
+  tag that disagrees with `package.json` or with `src/version.ts`, or that has no changelog
+  section, and re-checks that the tagged tree still reproduces the published public pool.
+  A published tag cannot be moved, so this is the last point at which a mistake is cheap.
+- **`CODEOWNERS`.** Every path is owned by the maintainer, so a fork pull request requests
+  review automatically and a ruleset can require it if the policy ever changes.
+- **A repository settings checklist** in the README, covering the guarantees that live in
+  GitHub rather than in the repository: rulesets, the security features, and private
+  vulnerability reporting, without which the reporting link in `SECURITY.md` does not work.
+
 ## [1.0.0] - 2026-09-22
 
 The first public source release of ESAC-GI.

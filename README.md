@@ -42,6 +42,7 @@ document but is not implemented here.
 - [Repository layout](#repository-layout)
 - [Design specification](#design-specification)
 - [Tests](#tests)
+- [Repository settings](#repository-settings)
 - [Contributing, security, and licence](#contributing-security-and-licence)
 
 ## At a glance
@@ -498,7 +499,8 @@ specs/
                       scoring, and the criteria behind every point
 tests/all.test.ts     the test suite
 tools/                offline generators for the verified parameter pools
-.github/              issue templates, CI, and dependency automation
+.github/              issue templates, CODEOWNERS, CI, the release check, rulesets,
+                      and dependency automation
 CONTRIBUTING.md       contribution policy: issues and forks, no pull requests
 SECURITY.md           vulnerability and benchmark-integrity reporting
 CODE_OF_CONDUCT.md    expectations for the issue trackers
@@ -551,6 +553,47 @@ code runs:
 
 `npm run esac -- selftest` runs a comparable set of checks as a single offline command, and
 a perfect-oracle run reproduces exactly 75/75 through the full pipeline.
+
+## Repository settings
+
+Some of this project's guarantees are not files, and cannot be reviewed here: they are
+settings on the GitHub repository. They are listed so that a fork can reproduce them and so
+that none of them is silently lost.
+
+### Rulesets
+
+`.github/rulesets/` holds two rulesets as JSON: one for the default branch and one for
+release tags. They are not applied by pushing them. Apply each once per repository through
+**Settings**, **Rules**, then **Import a ruleset**, or with `gh api`. See
+`.github/rulesets/README.md` for the commands, for what each rule does, and for the one
+setting worth thinking about: the admin bypass, which is what lets the maintainer push to
+`main` directly instead of requiring a pull request.
+
+### Release check
+
+`.github/workflows/release.yml` runs on a `v*` tag and refuses a tag that disagrees with
+the code. It checks three things: that the tag matches the package version and the benchmark
+version in `src/version.ts`, that `CHANGELOG.md` has a section for that version, and that
+the tagged tree still reproduces the committed public pool. A published tag can never be
+moved, so this is the last moment at which a mistake is cheap.
+
+### Features to switch on
+
+| Setting | Where | Why it matters here |
+|---|---|---|
+| Private vulnerability reporting | Settings, Security | `SECURITY.md` and the issue templates both link to the private advisory form. Until this is enabled, that link does not work and there is no private route for a report. |
+| Dependabot alerts and security updates | Settings, Security | The project has no runtime dependencies, so the realistic risk is the dev toolchain. |
+| Secret scanning and push protection | Settings, Security | The repository should never hold a held-out seed or an API key. Push protection stops one arriving by accident. |
+| CodeQL default setup | Settings, Security | The CLI parses untrusted model output, so static analysis of the harness is worth having. |
+| Actions default workflow permissions | Settings, Actions | Keep the default read-only, so a workflow cannot write to the repository unless it asks. Every workflow here declares `contents: read`. |
+| Topics | Repository page | Discoverability: `benchmark`, `llm`, `evaluation`, `reproducibility`. |
+
+### Publishing a release
+
+Push the tag, let the release check pass, then create the GitHub release at that tag and use
+the matching `CHANGELOG.md` section as the body. Do not move or delete a published tag:
+the ruleset refuses both, and a moved tag would make every score attributed to that version
+unattributable.
 
 ## Contributing, security, and licence
 

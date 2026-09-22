@@ -1,0 +1,18 @@
+# Code owners.
+#
+# Every path is owned by the maintainer, so a fork pull request requests review
+# automatically and a branch ruleset can require review if the project ever moves to a
+# pull-request flow. Upstream pull requests are not accepted (see CONTRIBUTING.md); this
+# file exists so that fork-based work and any future change of policy route cleanly.
+#
+# VERIFY THIS LINE BEFORE RELYING ON IT. If EcoWestern is an organisation rather than a
+# user, an organisation handle alone is not valid here and must name a team instead, for
+# example:
+#
+#   *    @EcoWestern/maintainers
+#
+# Check with: gh api repos/EcoWestern/ESAC-GI/teams  (or look for the team in the UI).
+# Git will not warn about an invalid owner; GitHub reports it on the repository's
+# CODEOWNERS page once it exists.
+
+*    @EcoWestern
