@@ -595,7 +595,46 @@ comes with a reason and a route forward rather than silence, and the policy in
 | Secret scanning and push protection | Settings, Security | The repository should never hold a held-out seed or an API key. Push protection stops one arriving by accident. |
 | CodeQL default setup | Settings, Security | The CLI parses untrusted model output, so static analysis of the harness is worth having. |
 | Actions default workflow permissions | Settings, Actions | Keep the default read-only, so a workflow cannot write to the repository unless it asks. Every workflow here declares `contents: read`. |
-| Topics | Repository page | Discoverability: `benchmark`, `llm`, `evaluation`, `reproducibility`. |
+| Topics | Repository page | Set from the list below. Topics are how anyone finds this repository at all. |
+
+### Description and topics
+
+The repository description, ready to paste into the About panel. 277 characters, inside
+GitHub's limit of 350:
+
+> A short, cheap benchmark that measures difficult capabilities: 42 generated items, 75
+> points across 8 categories. 60 points graded deterministically, 15 by a pinned
+> open-weight judge. Answers are computed from a seed rather than stored, so the repository
+> is the whole artifact.
+
+Topics, most load-bearing first. Eighteen of GitHub's twenty slots, all lowercase and
+hyphenated as GitHub requires, and none longer than the 50 character cap:
+
+```
+benchmark, ai-benchmark, llm, llm-benchmark, llm-evaluation, evaluation,
+general-intelligence, reproducibility, contamination, judge, rubric, scoring,
+openai-compatible, openrouter, cli, typescript, zero-dependencies, mit-license
+```
+
+The two ways to set them. The description:
+
+```bash
+gh repo edit EcoWestern/ESAC-GI \
+  --description "A short, cheap benchmark that measures difficult capabilities: 42 generated items, 75 points across 8 categories. 60 points graded deterministically, 15 by a pinned open-weight judge. Answers are computed from a seed rather than stored, so the repository is the whole artifact."
+```
+
+And the topics, one flag per topic:
+
+```bash
+gh repo edit EcoWestern/ESAC-GI \
+  --add-topic benchmark --add-topic ai-benchmark --add-topic llm \
+  --add-topic llm-benchmark --add-topic llm-evaluation --add-topic evaluation \
+  --add-topic general-intelligence --add-topic reproducibility \
+  --add-topic contamination --add-topic judge --add-topic rubric \
+  --add-topic scoring --add-topic openai-compatible --add-topic openrouter \
+  --add-topic cli --add-topic typescript --add-topic zero-dependencies \
+  --add-topic mit-license
+```
 
 ### Publishing a release
 

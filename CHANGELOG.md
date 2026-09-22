@@ -30,8 +30,9 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **`CODEOWNERS`.** Every path is owned by the maintainer, so a fork pull request requests
   review automatically and a ruleset can require it if the policy ever changes.
 - **A repository settings checklist** in the README, covering the guarantees that live in
-  GitHub rather than in the repository: rulesets, the security features, and private
-  vulnerability reporting, without which the reporting link in `SECURITY.md` does not work.
+  GitHub rather than in the repository: rulesets, the security features, private
+  vulnerability reporting, without which the reporting link in `SECURITY.md` does not work,
+  and the repository description and topic list.
 - **The pull request policy is enforced, not just stated.**
   `.github/workflows/close-pull-requests.yml` answers a pull request from outside the
   organisation with the notice in `.github/pull-request-notice.md` and closes it. Members,
