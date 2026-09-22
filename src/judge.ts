@@ -25,7 +25,7 @@ export function renderJudgePrompt(rubric: Rubric, taskPrompt: string, response: 
   const criteria = rubric.criteria
     .map((c, i) => {
       const levels = (c.levels ?? [])
-        .map((l) => `    - ${l.score}: ${l.label} — ${l.description}`)
+        .map((l) => `    - ${l.score} (${l.label}): ${l.description}`)
         .join("\n");
       return (
         `${i + 1}. id: ${c.id} (weight ${c.weight}, scored 0-${JUDGE_SCORE_MAX})\n` +
@@ -57,7 +57,7 @@ export function renderJudgePrompt(rubric: Rubric, taskPrompt: string, response: 
  * sentence, because small open-weight models are inconsistent about this and a
  * formatting quirk should not invalidate an otherwise usable judgment.
  *
- * Returns null when no usable object can be recovered — the caller treats that as an
+ * Returns null when no usable object can be recovered. The caller treats that as an
  * infrastructure failure.
  */
 export function parseJudgeResponse(raw: string, rubric: Rubric): JudgeResponse | null {

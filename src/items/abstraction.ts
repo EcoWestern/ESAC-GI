@@ -1,8 +1,8 @@
 /**
- * Category 5 — Abstraction / pattern recognition (5 items, 10 pts).
+ * Category 5: Abstraction / pattern recognition (5 items, 10 pts).
  *
  * Five distinct mechanics rather than five variations of one. Each is structured so
- * that the rule must be *inferred* before it can be applied to new material — a
+ * that the rule must be *inferred* before it can be applied to new material. A
  * grid item with a visible answer would test transcription, not abstraction.
  *
  * Where a sequence is generated, the wrong options are the answers produced by
@@ -166,7 +166,7 @@ const sequence: ItemTemplate = {
   id: "abstraction.sequence",
   category: "abstraction",
   measures:
-    "Second-order sequence completion. Every distractor is the value produced by a simpler rule that fits the visible terms — constant difference rarely survives, but slightly richer wrong rules do.",
+    "Second-order sequence completion. Every distractor is the value produced by a simpler rule that fits the visible terms. A constant difference rarely survives, but slightly richer wrong rules do.",
   generate: (rng) => {
     const rule = rng.pick(SEQUENCE_RULES);
     const start = rule.id === "factorial-plus-n" ? 1 : rng.range(1, 3);
@@ -274,7 +274,7 @@ const oddOneOut: ItemTemplate = {
         {
           id: "answer",
           weight: 1,
-          expected: `${odd} — ${property}`,
+          expected: `${odd} (${property})`,
           grader: g.programmatic(`selects the odd member (${odd})`, (r) => {
             // Import locally to keep the grader self-contained and pure.
             const letters = opts.options.map((_, i) => String.fromCharCode(65 + i));

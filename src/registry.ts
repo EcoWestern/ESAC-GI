@@ -50,7 +50,7 @@ export function instantiateAll(datasetSeed: string, pool: "public" | "heldout"):
     const split: Split = template.split ?? "both";
     if (!appliesToPool(split, pool)) continue;
 
-    // The seed depends only on (datasetSeed, itemId) — never on the run.
+    // The seed depends only on (datasetSeed, itemId), never on the run.
     const seed = deriveSeed(datasetSeed, template.id);
     const rng = makeRng(seed);
     const generated = template.generate(rng, seed);

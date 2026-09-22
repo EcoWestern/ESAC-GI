@@ -1,0 +1,84 @@
+name: Bug report
+description: Report a defect in the harness, a grader, the CLI, the adapters, or the documentation.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file this. Please do not paste API keys,
+        held-out seeds, or held-out item text anywhere in this report.
+        For anything security related, use the private advisory link instead.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the project is affected?
+      options:
+        - Item generator (wrong, guessable, or unstable instance)
+        - Grader (accepts a wrong answer, or rejects a right one)
+        - Runner (ordering, retries, replication, timeouts)
+        - Scoring or reporting
+        - Adapters (OpenAI-compatible HTTP, oracle)
+        - CLI (list, inspect, export, key, run, selftest)
+        - Tooling (gen-packing-pool, tsconfig, scripts)
+        - Documentation or spec
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version tag
+      description: Output of `npm run esac -- version`.
+      placeholder: ESAC-GI v1.0
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      description: Output of `node --version`. The harness requires 22.6 or newer.
+      placeholder: v22.6.0
+    validations:
+      required: true
+
+  - type: input
+    id: fingerprint
+    attributes:
+      label: Instance fingerprint
+      description: If the bug is item-specific, the fingerprint from the run output or `npm run esac -- inspect <itemId>`.
+      placeholder: a3f9c17e
+    validations:
+      required: false
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you observed instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands. Prefer steps that need no network access or API key.
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: I have read `specs/spec.md` (Part I is the original design basis, Part II is the first amendment), and this is not a documented design decision, such as the public pool being inferable or a judge-graded category being a small sample.
+          required: true
+        - label: I have searched existing issues for the same report.
+          required: true
+        - label: This report contains no API keys, no held-out seeds, and no held-out item text.
+          required: true

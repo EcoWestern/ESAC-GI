@@ -73,9 +73,9 @@ export function parseNumericLiteral(raw: string): number | null {
 }
 
 /**
- * Pull a single letter choice (A–J) out of a response, if it clearly contains one.
+ * Pull a single letter choice (A to J) out of a response, if it clearly contains one.
  *
- * Extraction is deliberately conservative. A speculative "find any standalone A–J
+ * Extraction is deliberately conservative. A speculative "find any standalone A to J
  * letter in the prose" scan is unsafe here for two reasons that both produce points
  * the model did not earn:
  *
@@ -86,6 +86,10 @@ export function parseNumericLiteral(raw: string): number | null {
  *
  * The recognised forms are therefore limited to an explicit answer cue, a response
  * that is nothing but a letter, and a letter terminating a short response.
+ *
+ * The cue patterns also accept an em dash or an en dash as the separator after a
+ * label, because models emit them there as punctuation. Those character classes are
+ * deliberate, not a style slip.
  */
 export function extractChoice(text: string, options: readonly string[]): string | null {
   const letters = options.map((_, i) => String.fromCharCode(65 + i));

@@ -1,11 +1,11 @@
 /**
- * Category 3 — Factual knowledge (10 items, 10 pts).
+ * Category 3: Factual knowledge (10 items, 10 pts).
  *
  * Two properties matter here that do not apply to the other categories:
  *
  * 1. **No contested facts.** Every entry below is unambiguous. Facts with genuinely
  *    disputed answers (constitutional vs. administrative capitals, languages whose
- *    family assignment is actively debated) are excluded — a benchmark that grades a
+ *    family assignment is actively debated) are excluded. A benchmark that grades a
  *    defensible answer as wrong is measuring its own editorial choices.
  *
  * 2. **Parametrized across a vetted pool, not reformatted boilerplate.** Each item
@@ -77,7 +77,7 @@ const capital: ItemTemplate = {
   id: "factual.capital",
   category: "factual",
   measures:
-    "Capital-city recall where the largest city is not the capital — the item pool deliberately favours countries where the two differ.",
+    "Capital-city recall where the largest city is not the capital. The item pool deliberately favours countries where the two differ.",
   generate: (rng) => {
     const [country, cap] = rng.pick(CAPITALS);
     const distractors = [

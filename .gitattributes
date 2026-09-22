@@ -1,0 +1,11 @@
+# Normalise text files to LF in the repository and in the working tree, so that
+# generated instance text and fingerprints are identical on every platform.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.webp binary
+
+# Machine-maintained files: keep them out of language statistics.
+package-lock.json linguist-generated=true
+public/*.jsonl linguist-generated=true

@@ -135,12 +135,12 @@ function buildAdapter(spec: string, role: "model" | "judge"): ModelAdapter | Jud
 
 function cmdList(): void {
   validateBank();
-  console.log(`\n${ESAC_VERSION_TAG} — ${TOTAL_ITEMS} items across ${CATEGORIES.length} categories, ${TOTAL_POINTS} points\n`);
+  console.log(`\n${ESAC_VERSION_TAG}: ${TOTAL_ITEMS} items across ${CATEGORIES.length} categories, ${TOTAL_POINTS} points\n`);
   for (const category of CATEGORIES) {
     const items = ALL_ITEMS.filter((i) => i.category === category.id);
     const grading = category.grading === "judge" ? "judge" : "deterministic";
     console.log(
-      `${category.name}  —  ${category.points} pts, ${items.length} items, ${grading}`,
+      `${category.name}: ${category.points} pts, ${items.length} items, ${grading}`,
     );
     for (const item of items) {
       const weight = item.weight !== undefined && item.weight !== 1 ? `  [weight ${item.weight}]` : "";
@@ -157,7 +157,7 @@ function cmdList(): void {
 function cmdExport(args: Args, split: Split, datasetSeed: string): void {
   const instances = instantiate(datasetSeed, split === "heldout" ? "heldout" : "public");
   const lines: string[] = [
-    `# ${ESAC_VERSION_TAG} — ${split} pool, ${instances.length} instances`,
+    `# ${ESAC_VERSION_TAG}: ${split} pool, ${instances.length} instances`,
     `# dataset seed fingerprint: ${seedFingerprint(datasetSeed)}`,
     `# CANARY: ${CANARY}`,
   ];
@@ -214,7 +214,7 @@ function cmdInspect(args: Args): void {
   console.log(`\n--- PROMPT ---\n${instance.prompt}`);
   console.log(`\n--- CHECKS ---`);
   for (const check of instance.checks) {
-    console.log(`  ${check.id} (weight ${check.weight}) — ${check.grader.type}`);
+    console.log(`  ${check.id} (weight ${check.weight}), ${check.grader.type}`);
     if (check.expected !== undefined) console.log(`    expected: ${trim(check.expected, 400)}`);
   }
   if (instance.reference !== undefined) {
@@ -324,7 +324,7 @@ async function cmdRun(args: Args): Promise<void> {
       `${ordered.length} items  ·  ${judge ? `judge: ${judge.id}` : "no judge"}`,
   );
   if (dryRun) {
-    console.log("  NOTE: oracle adapter — this exercises the harness, it does not measure a model.\n");
+    console.log("  NOTE: oracle adapter. This exercises the harness; it does not measure a model.\n");
   } else {
     console.log("");
   }
@@ -655,7 +655,7 @@ async function main(): Promise<void> {
 
 function helpText(): string {
   return `
-ESAC-GI — EcoWestern Short and Cheap General Intelligence Benchmark
+ESAC-GI: EcoWestern Short and Cheap General Intelligence Benchmark
 
   esac list                                  show the item bank and point allocation
   esac export [--split public|heldout] [--out <file>]

@@ -3,7 +3,7 @@
  *
  * Reproducibility requirement (first-amendment §4): where an item is parametrized,
  * its generation logic must be reproducible. Everything here is pure and stable
- * across platforms and Node versions — no Math.random, no Date, no locale.
+ * across platforms and Node versions: no Math.random, no Date, no locale.
  */
 
 /** FNV-1a 32-bit. Used for seed derivation and instance fingerprints. */
@@ -50,7 +50,7 @@ export interface Rng {
   state(): number;
 }
 
-/** mulberry32 — small, fast, well-distributed, and trivially reproducible. */
+/** mulberry32: small, fast, well-distributed, and trivially reproducible. */
 export function makeRng(seed: number): Rng {
   let s = seed >>> 0;
 

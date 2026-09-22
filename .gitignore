@@ -3,3 +3,17 @@ runs/
 dist/
 *.local.json
 .heldout/
+
+# Held-out evaluation material is evaluator-controlled and must never be
+# committed (specs/first-amendment.md section 3).
+heldout-key*.json
+*.heldout.json
+
+# Editor and OS noise.
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp

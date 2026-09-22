@@ -9,7 +9,7 @@
  *
  * 2. **Infrastructure vs. model failure.** Resolution 8. An adapter that throws
  *    `InfrastructureError` (or any unrecognised error) yields a retry, never a zero.
- *    A returned response — including an empty one or a refusal — is a scored model
+ *    A returned response, including an empty one or a refusal, is a scored model
  *    response. `ModelTimeoutError` is a scored failure.
  *
  * 3. **Replication.** Resolution 5. Judge-graded items run the model twice and each
@@ -165,8 +165,8 @@ async function callModelWithRetries(
         };
       }
 
-      // Everything else — transport, rate limit, auth, an adapter bug, any thrown
-      // value — is treated as infrastructure: retried, never scored.
+      // Everything else (transport, rate limit, auth, an adapter bug, any thrown
+      // value) is treated as infrastructure: retried, never scored.
       infraRetries++;
       lastError = err instanceof InfrastructureError ? err.message : String(err);
     }

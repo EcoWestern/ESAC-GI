@@ -1,5 +1,5 @@
 /**
- * Category 7 — Writing quality (2 items, 10 pts).
+ * Category 7: Writing quality (2 items, 10 pts).
  *
  * Judge-graded (tenet 2's documented exception). Two items, deliberately different
  * in their demands: one constrained register/compression task, one persuasive/
@@ -35,7 +35,7 @@ const TOPICS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Item 1 — constrained register / compression
+// Item 1: constrained register / compression
 // ---------------------------------------------------------------------------
 
 const registerRubric: Rubric = {
@@ -135,7 +135,7 @@ const registerTask: ItemTemplate = {
 };
 
 // ---------------------------------------------------------------------------
-// Item 2 — persuasive / argumentative
+// Item 2: persuasive / argumentative
 // ---------------------------------------------------------------------------
 
 const argumentRubric: Rubric = {
@@ -212,7 +212,7 @@ const argumentTask: ItemTemplate = {
   generate: (rng) => {
     // `proposal` is a full noun phrase naming the decision under debate. The stance
     // is kept separate so the instruction reads "argue for the following proposal:
-    // …" — concatenating a stance phrase that already contains its own object onto a
+    // …". Concatenating a stance phrase that already contains its own object onto a
     // noun phrase produces ungrammatical text ("arguing against the ban a
     // university's decision to…") and would make the prompt look machine-generated.
     const proposals = [

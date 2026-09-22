@@ -1,0 +1,91 @@
+name: Item challenge
+description: Challenge an item's correctness, difficulty, clarity, or construct validity.
+title: "[item] "
+labels: ["item-challenge"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An item challenge is the most useful report this project can receive.
+        To be actionable it needs evidence: which instance, and precisely why the
+        item fails.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of challenge
+      options:
+        - "Incorrect: the reference answer or a grader is wrong"
+        - "Ambiguous: more than one answer is defensible"
+        - "Guessable: a shortcut or heuristic beats the item without doing the work"
+        - "Mis-targeted: the item does not measure the construct its category claims"
+        - "Contaminated: the item appears in training data, or a model recites it"
+        - "Unstable: the instance varies in a way it should not"
+    validations:
+      required: true
+
+  - type: input
+    id: item-id
+    attributes:
+      label: Item id
+      description: As printed by `npm run esac -- list`, for example `math.packing`.
+      placeholder: math.packing
+    validations:
+      required: true
+
+  - type: input
+    id: split-seed
+    attributes:
+      label: Split and dataset seed
+      description: Which pool, and which seed you generated under. State the split only for held-out runs, and never paste a held-out seed.
+      placeholder: public, esac-gi-v1.0-public
+    validations:
+      required: true
+
+  - type: input
+    id: fingerprint
+    attributes:
+      label: Instance fingerprint
+      description: From `npm run esac -- inspect <itemId>` or the run output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: prompt
+    attributes:
+      label: The exact instance prompt
+      description: The prompt as generated under your seed, verbatim.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: argument
+    attributes:
+      label: Why the item fails
+      description: |
+        The substantive part of the report.
+        For a wrong answer: the corrected value and how you derived it.
+        For ambiguity: the second defensible answer, and why it is defensible.
+        For guessability: the shortcut, and the answer it produces.
+        For contamination: the evidence that the item or its answer was memorised.
+        For instability: the two seeds that produce the unexpected variation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Reproduction or evidence
+      description: Commands, a saved model response, or a transcript. Redact anything sensitive.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: This report contains no held-out seeds, no held-out item text, and no API keys.
+          required: true

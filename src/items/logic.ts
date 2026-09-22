@@ -1,5 +1,5 @@
 /**
- * Category 1 — Logic & deduction (5 items, 10 pts).
+ * Category 1: Logic & deduction (5 items, 10 pts).
  *
  * Every puzzle is generated from a randomly-drawn ground truth and then verified
  * by brute force to have exactly one solution. That verification is what makes the
@@ -128,7 +128,7 @@ const seating: ItemTemplate = {
 
       return {
         prompt:
-          `${names.length} people — ${names.join(", ")} — are seated in a row of ${names.length} chairs, ` +
+          `${names.length} people (${names.join(", ")}) are seated in a row of ${names.length} chairs, ` +
           `numbered 1 to ${names.length} from left to right. Exactly one person occupies each chair.\n\n` +
           `${clueBlock}\n\n` +
           `Who is seated in chair ${target + 1}? Answer with only that person's name.`,
@@ -239,7 +239,7 @@ const knightsAndKnaves: ItemTemplate = {
       const opts = buildOptions(rng, isKnight ? "A knight" : "A knave", [
         isKnight ? "A knave" : "A knight",
         "Cannot be determined",
-        "Neither — the statements are inconsistent",
+        "Neither: the statements are inconsistent",
       ]);
 
       return {
@@ -260,7 +260,7 @@ const knightsAndKnaves: ItemTemplate = {
 /**
  * Monadic predicate logic has the property that a model is fully characterised by
  * which of the 2^n predicate-signature "types" are non-empty. With three predicates
- * that is 255 models, so entailment can be decided exactly by enumeration — no
+ * that is 255 models, so entailment can be decided exactly by enumeration, with no
  * heuristic and no dependence on a hand-written answer key.
  */
 const NUM_TYPES = 8;
@@ -372,7 +372,7 @@ const syllogism: ItemTemplate = {
         // every model considered.
         //
         // Without this, a premise pair like "No engineers are surveyors" together with
-        // "All engineers are surveyors" is satisfiable — but only when no engineers
+        // "All engineers are surveyors" is satisfiable, but only when no engineers
         // exist. That is valid first-order logic and useless as a puzzle: it reads to a
         // competent solver as a flat contradiction rather than as a subtle inference, so
         // the item would test willingness to accept a vacuous reading instead of
@@ -504,7 +504,7 @@ const ranking: ItemTemplate = {
 
       return {
         prompt:
-          `Five runners — ${names.join(", ")} — finished a race. No two finished at the same time.\n\n` +
+          `Five runners (${names.join(", ")}) finished a race. No two finished at the same time.\n\n` +
           `${clueBlock}\n\n` +
           `Who finished ${target + 1}${target === 1 ? "nd" : target === 2 ? "rd" : "th"}? Answer with only that person's name.`,
         checks: [singleNameCheck(names, answer)],
@@ -561,7 +561,7 @@ const grid: ItemTemplate = {
       const cityOf = asCityMap(rng.shuffle([...CITIES]));
 
       // ---------------------------------------------------------------------
-      // Phase A — pin the pet mapping by greedy constraint minimisation.
+      // Phase A: pin the pet mapping by greedy constraint minimisation.
       //
       // Candidates are ordered compound-negation first, then single negation,
       // then positive, so the greedy search prefers the more informative
@@ -631,7 +631,7 @@ const grid: ItemTemplate = {
       if (candidatesForSubject.length === 0) continue;
 
       // ---------------------------------------------------------------------
-      // Phase B — pin the city mapping, seeded with one cross clue so the item
+      // Phase B: pin the city mapping, seeded with one cross clue so the item
       // genuinely requires holding both mappings at once.
       // ---------------------------------------------------------------------
       const petPerm = petRemaining[0]!;
@@ -688,7 +688,7 @@ const grid: ItemTemplate = {
 
       return {
         prompt:
-          `Four friends — ${names.join(", ")} — each keep a different animal (one of: ${PETS.join(", ")}) ` +
+          `Four friends (${names.join(", ")}) each keep a different animal (one of: ${PETS.join(", ")}) ` +
           `and each live in a different city (one of: ${CITIES.join(", ")}).\n\n` +
           `${clueBlock}\n\n` +
           `Which animal does ${subject} keep?\n\n${opts.block}\n\nAnswer with only the letter of the correct choice.`,

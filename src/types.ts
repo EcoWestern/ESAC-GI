@@ -1,7 +1,7 @@
 /**
  * Core type contracts for ESAC-GI.
  *
- * Design note — why items are code, not JSON:
+ * Design note: why items are code, not JSON:
  * Resolution 4 requires parametrized items whose generation *and scoring* logic is
  * reproducible. A stored answer key cannot satisfy that: if the instance is
  * regenerated, the key is wrong. So each item is a template that, given a
@@ -261,7 +261,7 @@ export interface JudgeInput {
 export interface JudgeResponse {
   /**
    * Parsed criterion scores, when the adapter parsed them itself. Optional because
-   * an adapter may instead return raw text for the shared parser to handle — which
+   * an adapter may instead return raw text for the shared parser to handle, which
    * is what the HTTP adapter does, so that every provider goes through one parser.
    */
   readonly scores?: Readonly<Record<string, number>>;

@@ -179,7 +179,7 @@ test("seed fingerprint is stable and does not leak the seed", () => {
 });
 
 // ===========================================================================
-// 3. Item correctness — references and negative controls
+// 3. Item correctness: references and negative controls
 // ===========================================================================
 
 test("every deterministic reference answer scores 100% on its own checks", () => {
@@ -245,7 +245,7 @@ test("multiple-choice items have distinct options and a contiguous letter sequen
 });
 
 // ===========================================================================
-// 4. Difficulty claims — the shortcuts must be wrong
+// 4. Difficulty claims: the shortcuts must be wrong
 // ===========================================================================
 
 test("packing pool entries all make greedy strictly suboptimal", () => {
@@ -453,7 +453,7 @@ test("judge parser accepts bare, fenced, and embedded JSON", () => {
   assert.deepEqual(parseJudgeResponse('{"a": 3, "b": 4}', rubric)?.scores, { a: 3, b: 4 });
   assert.deepEqual(parseJudgeResponse('```json\n{"a": 2, "b": 1}\n```', rubric)?.scores, { a: 2, b: 1 });
   assert.deepEqual(
-    parseJudgeResponse('Here are my scores: {"a": 1, "b": 1} — done.', rubric)?.scores,
+    parseJudgeResponse('Here are my scores: {"a": 1, "b": 1}, and that is final.', rubric)?.scores,
     { a: 1, b: 1 },
   );
 });
@@ -549,7 +549,7 @@ test("meanFraction averages the 2x2 observation set", () => {
 });
 
 // ===========================================================================
-// 7. Runner behaviour — replication and failure classification
+// 7. Runner behaviour: replication and failure classification
 // ===========================================================================
 
 function stubModel(text: string): ModelAdapter {
@@ -633,8 +633,8 @@ test("a judge that cannot be parsed is an infrastructure failure, not a zero", a
 test("a model failure on one replication run is scored as a zero for that run", async () => {
   // Resolution 5: a judge-graded item averages its two model runs. If one run fails
   // at the model level (a timeout, per the agreed classification), that run must
-  // contribute zero rather than being silently dropped — dropping it would let a
-  // model improve its score by failing selectively.
+  // contribute zero rather than being silently dropped, since dropping it would let
+  // a model improve its score by failing selectively.
   let call = 0;
   const { ModelTimeoutError: MTE } = await import("../src/types.ts");
   const partlyTimingOut: ModelAdapter = {

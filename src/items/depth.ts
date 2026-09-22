@@ -1,9 +1,10 @@
 /**
- * Category 8 — Response-depth calibration (5 items, 5 pts).
+ * Category 8: Response-depth calibration (5 items, 5 pts).
  *
- * Construct (first-amendment §2): whether the model can infer the *appropriate depth
- * of response from contextual cues* — not whether it can follow an explicit "be
- * concise" or "be detailed" instruction, and not raw response length.
+ * Construct (Part II §2 of the design specification): whether the model can infer
+ * the *appropriate depth of response from contextual cues*, and not whether it can
+ * follow an explicit "be concise" or "be detailed" instruction, or raw response
+ * length.
  *
  * The category therefore contains no instruction about length anywhere in the
  * prompt. The depth cue must be carried by the situation: who is asking, what they
@@ -40,7 +41,7 @@ import { g } from "../graders.ts";
 const SUBSTANTIVE_RUBRIC: Rubric = {
   id: "depth.substantive.v1",
   context:
-    "This situation requires a substantive, well-developed response. The person asking has a real need for a layered explanation, reasoning, or steps — the context makes that clear even though the prompt does not say so and does not use the words 'detail' or 'explain'. A dismissively short answer that technically touches the question is a failure of depth calibration, not an acceptable minimal answer.",
+    "This situation requires a substantive, well-developed response. The person asking has a real need for a layered explanation, reasoning, or steps. The context makes that clear even though the prompt does not say so and does not use the words 'detail' or 'explain'. A dismissively short answer that technically touches the question is a failure of depth calibration, not an acceptable minimal answer.",
   criteria: [
     {
       id: "answered",
@@ -81,7 +82,7 @@ const SUBSTANTIVE_RUBRIC: Rubric = {
 const CONCISE_RUBRIC: Rubric = {
   id: "depth.concise.v1",
   context:
-    "This situation calls for a short, direct response. The person asking has supplied a lot of context but needs only a specific decision, value, or confirmation — the context makes that clear even though the prompt does not say 'be brief'. Delivering an essay, a structured summary, or a list of caveats where a direct answer was needed is a failure of depth calibration.",
+    "This situation calls for a short, direct response. The person asking has supplied a lot of context but needs only a specific decision, value, or confirmation. The context makes that clear even though the prompt does not say 'be brief'. Delivering an essay, a structured summary, or a list of caveats where a direct answer was needed is a failure of depth calibration.",
   criteria: [
     {
       id: "answered",
@@ -109,7 +110,7 @@ const CONCISE_RUBRIC: Rubric = {
       id: "not-curt",
       weight: 1,
       description:
-        "Is brevity achieved without being unhelpfully curt — that is, is the answer complete at its own scale rather than clipped? Score 4 for brief but sufficient; 2 for so terse that it is ambiguous; 0 for a fragment that does not stand alone.",
+        "Is brevity achieved without being unhelpfully curt, meaning that the answer is complete at its own scale rather than clipped? Score 4 for brief but sufficient; 2 for so terse that it is ambiguous; 0 for a fragment that does not stand alone.",
       levels: [
         { score: 0, label: "fragment", description: "So terse it does not stand alone as an answer." },
         { score: 2, label: "ambiguous", description: "Brief to the point of uncertainty." },

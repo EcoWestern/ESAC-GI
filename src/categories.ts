@@ -1,9 +1,10 @@
 /**
  * ESAC-GI category registry.
  *
- * Point allocations and item counts are fixed by the design spec and
- * first-amendment §6. Both must total 75 and 42 respectively — asserted at load
- * time so a drift in either is a hard failure rather than a silently wrong score.
+ * Point allocations and item counts are fixed by the design specification
+ * (`specs/spec.md`, Part II §6). Both must total 75 and 42 respectively, asserted
+ * at load time so a drift in either is a hard failure rather than a silently wrong
+ * score.
  */
 
 import type { CategoryDef, CategoryId } from "./types.ts";

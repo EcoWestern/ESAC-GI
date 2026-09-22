@@ -1,18 +1,40 @@
 {
   "name": "@ecowestern/esac-gi",
   "version": "1.0.0",
-  "description": "ESAC-GI — EcoWestern Short and Cheap General Intelligence Benchmark. Item bank, harness, and scoring.",
+  "description": "ESAC-GI: EcoWestern Short and Cheap General Intelligence Benchmark. Item bank, harness, and scoring.",
   "license": "MIT",
-  "author": "EcoWestern",
+  "author": {
+    "name": "EcoWestern",
+    "url": "https://github.com/EcoWestern"
+  },
   "type": "module",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EcoWestern/ESAC-GI.git"
+  },
+  "homepage": "https://github.com/EcoWestern/ESAC-GI#readme",
+  "bugs": {
+    "url": "https://github.com/EcoWestern/ESAC-GI/issues"
+  },
+  "keywords": [
+    "benchmark",
+    "evaluation",
+    "llm",
+    "general-intelligence",
+    "reproducibility",
+    "esac",
+    "ecowestern"
+  ],
   "engines": {
     "node": ">=22.6"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test tests/all.test.ts",
-    "esac": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts"
+    "verify": "npm run typecheck && npm test",
+    "esac": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts",
+    "export:public": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts export --split public --out public/esac-gi-v1.0-public.jsonl"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

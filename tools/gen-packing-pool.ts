@@ -4,7 +4,7 @@
  * Run with: node --experimental-strip-types tools/gen-packing-pool.ts
  *
  * The packing item needs parameters where greedy-by-value-density is strictly
- * suboptimal — that is what makes it require actual optimisation rather than a
+ * suboptimal, which is what makes it require actual optimisation rather than a
  * heuristic. Searching for such parameters at instantiation time is slow and can
  * fail to converge, so the search is done once here and the verified results are
  * embedded in the item file. `tests/all.test.ts` re-verifies every embedded tuple,
@@ -26,7 +26,7 @@ interface Tuple {
   readonly greedy: number;
 }
 
-function solve(t: Omit<Tuple, "best" | "bestBig" | "bestSmall" | "greedy">): T & { best: number; bestBig: number; bestSmall: number; greedy: number } | null {
+function solve(t: Omit<Tuple, "best" | "bestBig" | "bestSmall" | "greedy">): Tuple | null {
   let best = -1;
   let bestBig = 0;
   let bestSmall = 0;

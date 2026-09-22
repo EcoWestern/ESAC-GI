@@ -12,7 +12,7 @@ import type { JudgeAdapter, JudgeInput, JudgeResponse, ModelAdapter, ModelReques
 import type { Rng } from "./rng.ts";
 
 // ---------------------------------------------------------------------------
-// Oracle — a self-test adapter
+// Oracle: a self-test adapter
 // ---------------------------------------------------------------------------
 
 export interface OracleOptions {
@@ -31,8 +31,8 @@ export interface OracleOptions {
 /**
  * Deterministic oracle used by the test suite and by `--dry-run`.
  *
- * It exists so the harness itself can be verified end-to-end — ordering, retries,
- * replication, scoring, thresholds — without network access or API spend.
+ * It exists so the harness itself can be verified end-to-end (ordering, retries,
+ * replication, scoring, thresholds) without network access or API spend.
  */
 export function createOracleAdapter(options: OracleOptions = {}): ModelAdapter & {
   answerKey: Map<string, string>;
@@ -145,7 +145,7 @@ export interface HttpAdapterOptions {
  * Any OpenAI-compatible chat-completions endpoint.
  *
  * Covers OpenAI, DeepSeek, Groq, Together, vLLM, Ollama, LM Studio, and llama.cpp's
- * server — which is what makes the "no single vendor grades anyone" requirement
+ * server, which is what makes the "no single vendor grades anyone" requirement
  * practically satisfiable: the judge can be a locally-hosted open-weight model
  * reached through this same adapter.
  *

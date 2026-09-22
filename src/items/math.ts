@@ -1,11 +1,11 @@
 /**
- * Category 2 — Math reasoning (5 items, 10 pts).
+ * Category 2: Math reasoning (5 items, 10 pts).
  *
  * Design constraint (spec, "Keeping items hard despite being short"): every item is
  * long-to-think / short-to-answer. The response is a single integer; reaching it
  * requires real computation. Three items are built so that the obvious shortcut
  * (greedy rate, greedy value-density, naive modular arithmetic) yields a *wrong*
- * integer — a wrong-but-plausible answer is a better distractor than a longer prompt.
+ * integer. A wrong-but-plausible answer is a better distractor than a longer prompt.
  *
  * Every expected value is computed. No stored answer keys.
  */
@@ -37,7 +37,7 @@ const congruences: ItemTemplate = {
   id: "math.crt",
   category: "math",
   measures:
-    "Simultaneous congruences. The shortcut — taking the remainder of the product of remainders — produces a plausible wrong integer.",
+    "Simultaneous congruences. The shortcut, taking the remainder of the product of remainders, produces a plausible wrong integer.",
   generate: (rng) => {
     for (let attempt = 0; attempt < 200; attempt++) {
       const mods = rng.sample([7, 9, 11, 13, 16, 17, 19, 23, 25], 3);

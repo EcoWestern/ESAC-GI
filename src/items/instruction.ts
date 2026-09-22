@@ -1,5 +1,5 @@
 /**
- * Category 6 — Instruction-following (5 items, 10 pts).
+ * Category 6: Instruction-following (5 items, 10 pts).
  *
  * Every grader in this category is programmatic: the constraint is the task, so it
  * must be verified structurally rather than by string comparison. Checks are
@@ -128,7 +128,7 @@ function parsePairs(r: string): { name: string; value: number }[] {
 /**
  * Construct one concrete sentence satisfying all four content constraints.
  *
- * The item admits many valid answers, so this is not "the" answer — it is a
+ * The item admits many valid answers, so this is not "the" answer. It is a
  * known-good witness. It exists so the held-out scoring key has something to
  * verify against and so the harness self-test can confirm a perfect run is
  * reachable. Deterministic in its inputs.
@@ -436,10 +436,10 @@ const negativeConstraints: ItemTemplate = {
       prompt:
         `Write a short note with exactly three sections, headed ${readA}:, ${readB}:, and ${writeC}:, in ` +
         `that order.\n\n` +
-        `Hard prohibitions — these override any other consideration:\n` +
+        `Hard prohibitions, which override any other consideration:\n` +
         `- The word "data" must not appear anywhere in your response, in any form or capitalisation.\n` +
         `- Do not use any of these words: ${banned.join(", ")}.\n` +
-        `- Do not write anything outside the three sections — no introduction, no conclusion, no summary.\n\n` +
+        `- Do not write anything outside the three sections. No introduction, no conclusion, no summary.\n\n` +
         `Total length must be 60 words or fewer.`,
       checks,
       reference: [

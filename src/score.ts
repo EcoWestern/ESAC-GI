@@ -142,7 +142,7 @@ export function renderReport(report: RunReport, opts: { verbose?: boolean } = {}
   );
   if (partial) {
     lines.push(
-      `        NOTE: partial run — only ${report.attemptedPoints.toFixed(2)} of ` +
+        `        NOTE: partial run. Only ${report.attemptedPoints.toFixed(2)} of ` +
         `${report.totalPossible} points were attempted, so the percentage above is against the ` +
         `full suite and is not a comparable score.`,
     );
@@ -194,7 +194,7 @@ export function renderReport(report: RunReport, opts: { verbose?: boolean } = {}
       const score = `${item.awarded.toFixed(2)}/${item.points.toFixed(2)}`.padStart(11);
       lines.push(`  ${name} ${score}  ${(item.fraction * 100).toFixed(0).padStart(3)}%`);
       for (const check of item.checks) {
-        lines.push(`      ${check.checkId}: ${(check.fraction * 100).toFixed(0)}% — ${check.detail}`);
+        lines.push(`      ${check.checkId}: ${(check.fraction * 100).toFixed(0)}% (${check.detail})`);
       }
     }
     lines.push("");

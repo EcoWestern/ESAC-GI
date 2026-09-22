@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use ESAC-GI in research, evaluation reports, or comparative claims, please cite it using this metadata."
+title: "ESAC-GI: EcoWestern Short and Cheap General Intelligence Benchmark"
+abstract: >-
+  A short, cheap benchmark that measures difficult capabilities. Forty-two items
+  and 75 points across eight categories, 60 of them graded deterministically and
+  15 by a pinned open-weight judge. Items are generators rather than stored
+  questions, so expected answers are computed rather than remembered, and the
+  public repository is the distributable artifact.
+type: software
+authors:
+  - name: EcoWestern
+    website: "https://github.com/EcoWestern"
+repository-code: "https://github.com/EcoWestern/ESAC-GI"
+url: "https://github.com/EcoWestern/ESAC-GI"
+license: MIT
+license-url: "https://github.com/EcoWestern/ESAC-GI/blob/main/LICENSE"
+version: "1.0.0"
+date-released: "2026-09-22"
+keywords:
+  - benchmark
+  - evaluation
+  - large language models
+  - general intelligence
+  - contamination resistance
+  - reproducibility

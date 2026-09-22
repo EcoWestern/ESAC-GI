@@ -1,0 +1,60 @@
+name: Methodology question
+description: Ask about the design, scoring, judging, or versioning methodology.
+title: "[method] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Many design questions are already answered in `specs/spec.md`. Part I is the
+        original design basis and Part II is the first amendment, which governs where
+        the two disagree. Questions that the specification does not settle are welcome
+        here.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version tag
+      description: Which version the question is about.
+      placeholder: ESAC-GI v1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - Category definitions or item selection
+        - Parametrization and contamination resistance
+        - Public and held-out split
+        - Judge model, rubrics, or replication protocol
+        - Scoring, weighting, or thresholds
+        - Versioning and cross-version comparability
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: Be specific about the decision you are questioning, and why it matters for your use of the benchmark.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reading
+    attributes:
+      label: What you have already read
+      description: The spec sections you checked, and why they did not settle the question.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: This is not a request for a change. ESAC-GI does not accept pull requests, and design changes are major-version decisions made by the maintainers.
+          required: true

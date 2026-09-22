@@ -3,7 +3,7 @@
  *
  * Tenet 5: "Every score is meaningless without a version tag."
  *
- * Per `specs/first-amendment.md` §9, version numbers are meaningful:
+ * Per `specs/spec.md`, Part II (first amendment) §9, version numbers are meaningful:
  *   - MINOR releases change content/organisation but not what the score measures
  *     (item rotation, new parametrized instances, prompt edits).
  *   - MAJOR releases change the measurement itself (scoring methodology, judging
@@ -16,7 +16,7 @@
 /** Semantic version of the benchmark content + scoring protocol. */
 export const ESAC_VERSION = "1.0.0";
 
-/** Major version — the unit that scores are comparable within. */
+/** Major version: the unit that scores are comparable within. */
 export const ESAC_MAJOR = 1;
 
 /** Machine-readable tag, e.g. `ESAC-GI v1.0`. Always reported with a score. */
@@ -32,7 +32,7 @@ export const ESAC_SUITE = "ESAC-GI";
 /**
  * Dataset seeds. The public seed is disclosed with the repo; the held-out seed is
  * evaluator-controlled and must not be committed. Instance identity is derived as
- * `hash(datasetSeed + ":" + itemId)` — never from the run id — so that every model
+ * `hash(datasetSeed + ":" + itemId)`, never from the run id, so that every model
  * and every replication within a comparison sees byte-identical instances.
  */
 export const PUBLIC_DATASET_SEED = "esac-gi-v1.0-public";

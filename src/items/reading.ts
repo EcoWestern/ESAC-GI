@@ -1,5 +1,5 @@
 /**
- * Category 4 — Reading comprehension (5 items, 10 pts).
+ * Category 4: Reading comprehension (5 items, 10 pts).
  *
  * The passage is generated from a structured fact base, and every question is
  * derived from that same structure. This is what makes the answers computable:
@@ -233,7 +233,7 @@ const temporalOrdering: ItemTemplate = {
 };
 
 // ---------------------------------------------------------------------------
-// 4. Scope discrimination — which claim is NOT supported
+// 4. Scope discrimination: which claim is NOT supported
 // ---------------------------------------------------------------------------
 
 const scopeDiscrimination: ItemTemplate = {
