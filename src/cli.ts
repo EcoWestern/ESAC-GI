@@ -29,7 +29,7 @@
  *   --yes                 never prompt, for scripts; requires --model
  */
 
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 
 import { CATEGORIES, CATEGORY_BY_ID, TOTAL_ITEMS, TOTAL_POINTS } from "./categories.ts";
@@ -155,6 +155,19 @@ function buildAdapter(
   }
 
   const [baseUrl, model, keyEnv] = parts as [string, string, string?];
+  if (!baseUrl || !model) {
+    fail(`--${role} needs a base URL and a model id, got "${spec}"`);
+  }
+  // Validated here rather than at the first request: a mistyped URL would otherwise surface as a
+  // transport failure three minutes in, which reads like an outage rather than like a typo.
+  let host: string;
+  try {
+    host = new URL(baseUrl).host;
+  } catch {
+    fail(`--${role}: "${baseUrl}" is not a URL. Include the scheme, for example https://openrouter.ai/api/v1`);
+  }
+  if (host.length === 0) fail(`--${role}: "${baseUrl}" has no host`);
+
   const apiKey = keyEnv ? (process.env[keyEnv] ?? "") : "";
   if (keyEnv && !apiKey) {
     fail(
@@ -164,7 +177,7 @@ function buildAdapter(
   }
 
   return createHttpAdapter({
-    id: `${model}@${new URL(baseUrl).host}`,
+    id: `${model}@${host}`,
     baseUrl,
     model,
     apiKey,
@@ -260,7 +273,25 @@ function cmdExport(args: Args, split: Split, datasetSeed: string): void {
   }
 
   const out = args.flags.get("out");
-  const body = lines.join("\n") + "\n";
+  const body = `${lines.join("\n")}\n`;
+
+  // Verify compares before writing. A verifier that writes first and then compares the file to
+  // the content it just wrote can only ever pass, and one that always passes is worse than none.
+  if (args.flags.has("verify")) {
+    if (!out) fail("export --verify needs --out <file>: there is nothing on disk to compare");
+    let current = "";
+    try {
+      current = readFileSync(out, "utf8");
+    } catch {
+      current = "";
+    }
+    if (current !== body) {
+      fail(`${out} is not reproducible from the ${split} pool under this seed`);
+    }
+    console.log(`${out} is reproducible: ${instances.length} instances match the ${split} pool`);
+    return;
+  }
+
   if (out) {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, body, "utf8");
@@ -956,6 +987,73 @@ function trim(s: string, n: number): string {
 // Entry point
 // ---------------------------------------------------------------------------
 
+/**
+ * The flags each command accepts, per the program's common CLI specification.
+ *
+ * Checked before anything runs. A permissive parser silently ignores an option it does not know,
+ * so a typo in `--items` would run the whole suite: money spent and a result nobody asked for.
+ *
+ * Kept beside the dispatcher rather than derived from the parsers, because the point of the
+ * check is to be independent of them: a flag missing from this table is a flag that cannot be
+ * passed, which is a visible failure rather than a silent no-op.
+ */
+const COMMAND_FLAGS: Readonly<Record<string, readonly string[]>> = {
+  list: [],
+  export: ["split", "out", "seed", "verify"],
+  inspect: ["seed"],
+  key: ["split", "out", "seed"],
+  seed: ["out", "force", "reveal"],
+  run: [
+    "model",
+    "judge",
+    "allow-unpinned-judge",
+    "split",
+    "items",
+    "seed",
+    "json",
+    "quiet",
+    "verbose",
+    "max-tokens",
+    "thinking-tokens",
+    "extra-body",
+  ],
+  auto: [
+    "model",
+    "judge",
+    "allow-unpinned-judge",
+    "split",
+    "items",
+    "seed",
+    "json",
+    "quiet",
+    "verbose",
+    "max-tokens",
+    "thinking-tokens",
+    "extra-body",
+    "yes",
+  ],
+  selftest: [],
+  version: [],
+  help: ["help"],
+  "": ["help"],
+};
+
+/** Refuse an option the command does not define, rather than ignoring it. */
+function rejectUnknownFlags(args: Args): void {
+  const allowed = COMMAND_FLAGS[args.command];
+  // An unknown command is the dispatcher's error to report, with a better message than this one.
+  if (allowed === undefined) return;
+
+  const unknown = [...args.flags.keys()].filter((name) => !allowed.includes(name));
+  if (unknown.length === 0) return;
+
+  const list = unknown.map((name) => `--${name}`).join(", ");
+  fail(
+    `unknown option${unknown.length === 1 ? "" : "s"} for "${args.command || "esac"}": ${list}.\n` +
+      "  Run `esac help` for the options a command takes.",
+  );
+}
+
 async function main(): Promise<void> {
   // Load a working-directory .env before anything reads a key. Variables exported in the
   // real environment win, so a CI secret is never shadowed by a stale file.
@@ -963,6 +1061,7 @@ async function main(): Promise<void> {
 
   const argv = process.argv.slice(2);
   const args = parseArgs(argv);
+  rejectUnknownFlags(args);
 
   switch (args.command) {
     case "list":
@@ -1023,8 +1122,9 @@ function helpText(): string {
 ESAC-GI: EcoWestern Short and Cheap General Intelligence Benchmark
 
   esac list                                  show the item bank and point allocation
-  esac export [--split public|heldout] [--out <file>]
-                                             write a JSONL snapshot of a pool
+  esac export [--split public|heldout] [--out <file>] [--verify]
+                                             write a JSONL snapshot of a pool, or check
+                                             that the file on disk is reproducible
   esac inspect <itemId> [--seed <s>]         render one generated instance
   esac key [--split heldout] [--out <file>]  emit the scoring key for a pool
   esac seed [show] [--force] [--out <path>]  generate or inspect the held-out seed
